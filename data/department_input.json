@@ -1,0 +1,167 @@
+{
+  "requirements": [
+    {
+      "id": "R1",
+      "course": "Data Structures",
+      "cohort": "CSE-S3-A",
+      "instructor": "I1",
+      "students": 60,
+      "hours": 3,
+      "block_size": 1,
+      "room_type": "LECTURE",
+      "accessible_room": false,
+      "locked_slot": null
+    },
+    {
+      "id": "R2",
+      "course": "Data Structures Lab B1",
+      "cohort": "CSE-S3-A-B1",
+      "instructor": "I4",
+      "students": 30,
+      "hours": 2,
+      "block_size": 2,
+      "room_type": "LECTURE",
+      "accessible_room": false,
+      "locked_slot": null
+    },
+    {
+      "id": "R3",
+      "course": "Data Structures Lab B2",
+      "cohort": "CSE-S3-A-B2",
+      "instructor": "I4",
+      "students": 30,
+      "hours": 2,
+      "block_size": 2,
+      "room_type": "LECTURE",
+      "accessible_room": false,
+      "locked_slot": null
+    },
+    {
+      "id": "R4",
+      "course": "Discrete Mathematics",
+      "cohort": "CSE-S3-A",
+      "instructor": "I2",
+      "students": 60,
+      "hours": 3,
+      "block_size": 1,
+      "room_type": "LECTURE",
+      "accessible_room": false,
+      "locked_slot": null
+    },
+    {
+      "id": "R5",
+      "course": "Database Systems",
+      "cohort": "CSE-S3-A",
+      "instructor": "I3",
+      "students": 60,
+      "hours": 3,
+      "block_size": 1,
+      "room_type": "LECTURE",
+      "accessible_room": false,
+      "locked_slot": null
+    },
+    {
+      "id": "R6",
+      "course": "Database Lab",
+      "cohort": "CSE-S3-A-B1",
+      "instructor": "I3",
+      "students": 30,
+      "hours": 2,
+      "block_size": 2,
+      "room_type": "LECTURE",
+      "accessible_room": false,
+      "locked_slot": null
+    }
+  ],
+  "rooms": [
+    {
+      "id": "LH1",
+      "name": "A Block Lecture Hall",
+      "room_type": "LECTURE",
+      "capacity": 120,
+      "building": "A",
+      "accessible": true,
+      "department": "CSE"
+    },
+    {
+      "id": "CR1",
+      "name": "A Block Classroom",
+      "room_type": "CLASSROOM",
+      "capacity": 65,
+      "building": "A",
+      "accessible": true,
+      "department": "CSE"
+    },
+    {
+      "id": "LAB1",
+      "name": "Computer Lab 1",
+      "room_type": "LAB",
+      "capacity": 32,
+      "building": "A",
+      "accessible": true,
+      "department": "CSE"
+    },
+    {
+      "id": "LAB2",
+      "name": "Computer Lab 2",
+      "room_type": "LAB",
+      "capacity": 32,
+      "building": "A",
+      "accessible": true,
+      "department": "CSE"
+    },
+    {
+      "id": "PHY1",
+      "name": "Physics Lab",
+      "room_type": "LAB",
+      "capacity": 32,
+      "building": "C",
+      "accessible": true,
+      "department": "Physics"
+    }
+  ],
+  "instructors": [
+    {
+      "id": "I1",
+      "name": "Dr. Sharma",
+      "max_hours_week": 18,
+      "unavailable": [],
+      "preferred": []
+    },
+    {
+      "id": "I2",
+      "name": "Prof. Verma",
+      "max_hours_week": 18,
+      "unavailable": [],
+      "preferred": []
+    },
+    {
+      "id": "I3",
+      "name": "Ms. Khan",
+      "max_hours_week": 18,
+      "unavailable": [
+        "Mon-1",
+        "Mon-2",
+        "Wed-1",
+        "Wed-2"
+      ],
+      "preferred": []
+    },
+    {
+      "id": "I4",
+      "name": "Lab Instructor",
+      "max_hours_week": 18,
+      "unavailable": [],
+      "preferred": []
+    }
+  ],
+  "class_groups": [
+    {
+      "program": "B.Tech",
+      "year": "3rd Year",
+      "section": "A",
+      "students": 60,
+      "department": "CSE"
+    }
+  ]
+}
