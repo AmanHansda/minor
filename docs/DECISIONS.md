@@ -11,3 +11,12 @@ The implemented showcase focuses on safe generation, validation, analytics, expl
 
 ## D4 Chatbot
 The chatbot is rule-based and reads only the generated timetable. It answers a defined set of timetable questions and cannot modify data, call an external service, or bypass validation.
+
+## D5 Soft Preference and Gap Optimization in Candidate Slot Ranking
+Candidate slots are ranked deterministically by scoring instructor preferences (bonus for preferred slots), cohort class adjacency (bonus for slots adjacent to existing classes on that day to eliminate idle gaps), and slight penalty for un-preferred period 1 slots. Hard constraints (H1–H9) remain strictly enforced by `validator.py`.
+
+## D6 Anti-Slop Academic Console Art Direction
+Follows `tasteskill v2` app-screen principles: flat surfaces bounded by clean 1px rules, zero blurry drop shadows, color strictly reserved for data state (forest green for Feasible, crimson for Infeasible, amber for multi-hour labs, neutral lunch break column), formal high-legibility typography for official university sheets, and full print-ready stylesheets.
+
+## D7 Universal Weekly Grid Sheets & Per-Entity Exports
+All three core scheduling perspectives (Academic Class, Faculty Member, and Classroom/Lab) are rendered as complete weekly Day × Period grids with lunch breaks and metadata. Dedicated export endpoints (`/api/export/class/<group>`, `/api/export/teacher/<id>`, `/api/export/room/<id>`) enable official distribution by the Timetable Office.
