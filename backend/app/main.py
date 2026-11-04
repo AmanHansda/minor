@@ -106,6 +106,10 @@ class Handler(SimpleHTTPRequestHandler):
         self.wfile.write(raw)
 
     def do_GET(self):
+        if self.path == "/favicon.ico":
+            self.send_response(204)
+            self.end_headers()
+            return
         reqs, rooms, people = current_data()
         if self.path == "/api/health":
             return self._send_json({"status": "ok", "project": "ChronosAI"})
