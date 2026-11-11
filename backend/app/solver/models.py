@@ -34,6 +34,7 @@ class Requirement:
     room_type: str
     accessible_room: bool = False
     locked_slot: Optional[str] = None
+    allocation_type: Optional[str] = None
 
 
 @dataclass

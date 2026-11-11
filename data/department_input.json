@@ -10,7 +10,8 @@
       "block_size": 1,
       "room_type": "LECTURE",
       "accessible_room": false,
-      "locked_slot": null
+      "locked_slot": null,
+      "allocation_type": "CLASS"
     },
     {
       "id": "R2",
@@ -20,9 +21,10 @@
       "students": 30,
       "hours": 2,
       "block_size": 2,
-      "room_type": "LECTURE",
+      "room_type": "LAB",
       "accessible_room": false,
-      "locked_slot": null
+      "locked_slot": null,
+      "allocation_type": "LAB"
     },
     {
       "id": "R3",
@@ -32,9 +34,10 @@
       "students": 30,
       "hours": 2,
       "block_size": 2,
-      "room_type": "LECTURE",
+      "room_type": "LAB",
       "accessible_room": false,
-      "locked_slot": null
+      "locked_slot": null,
+      "allocation_type": "LAB"
     },
     {
       "id": "R4",
@@ -46,7 +49,8 @@
       "block_size": 1,
       "room_type": "LECTURE",
       "accessible_room": false,
-      "locked_slot": null
+      "locked_slot": null,
+      "allocation_type": "CLASS"
     },
     {
       "id": "R5",
@@ -56,9 +60,10 @@
       "students": 60,
       "hours": 3,
       "block_size": 1,
-      "room_type": "LECTURE",
+      "room_type": "CLASSROOM",
       "accessible_room": false,
-      "locked_slot": null
+      "locked_slot": null,
+      "allocation_type": "CLASS"
     },
     {
       "id": "R6",
@@ -68,9 +73,10 @@
       "students": 30,
       "hours": 2,
       "block_size": 2,
-      "room_type": "LECTURE",
+      "room_type": "LAB",
       "accessible_room": false,
-      "locked_slot": null
+      "locked_slot": null,
+      "allocation_type": "LAB"
     }
   ],
   "rooms": [
@@ -126,7 +132,10 @@
       "name": "Dr. Sharma",
       "max_hours_week": 18,
       "unavailable": [],
-      "preferred": []
+      "preferred": [
+        "Mon-1",
+        "Tue-1"
+      ]
     },
     {
       "id": "I2",
@@ -157,6 +166,7 @@
   ],
   "class_groups": [
     {
+      "code": "CSE-S3-A",
       "program": "B.Tech",
       "year": "3rd Year",
       "section": "A",

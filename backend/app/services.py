@@ -17,6 +17,8 @@ def quality_report(entries, requirements, rooms, instructors):
             if periods:
                 gaps += max(periods) - min(periods) + 1 - len(set(periods))
     used_rooms = len({e.room for e in entries})
+    for i in instructors:
+        by_teacher.setdefault(i.id, 0)
     loads = list(by_teacher.values()) or [0]
     mean = sum(loads) / len(loads)
     fairness = round(sum(abs(x - mean) for x in loads) / (2 * len(loads) * mean), 3) if mean else 0
@@ -71,18 +73,69 @@ def explain_slot(entry, requirements, rooms, instructors):
 
 
 def absent_reschedule(schedule, absent_instructor, requirements, rooms, instructors):
+    import copy
     affected = [e for e in schedule.entries if e.instructor == absent_instructor]
     kept = [e for e in schedule.entries if e.instructor != absent_instructor]
-    req_ids = {e.requirement_id for e in affected}
-    changed_reqs = [r for r in requirements if r.id in req_ids]
+    if not affected:
+        return schedule, {
+            "affected_entries": 0,
+            "changed_entries": 0,
+            "substitutes": [],
+            "reassignments": [],
+            "message": f"Faculty member {absent_instructor} has no scheduled sessions. Timetable remains unchanged."
+        }
+
+    candidates = [i for i in instructors if i.id != absent_instructor]
+    teacher_loads = defaultdict(int)
+    for e in kept:
+        teacher_loads[e.instructor] += e.length
+
+    teacher_by_id = {i.id: i for i in instructors}
+    absent_person = teacher_by_id.get(absent_instructor)
+    absent_name = absent_person.name if absent_person else absent_instructor
+
+    full_reqs = []
+    substitutes_used = set()
+    reassignments_desc = []
+
+    for r in requirements:
+        if r.instructor == absent_instructor:
+            eligible = [c for c in candidates if teacher_loads[c.id] + r.hours <= c.max_hours_week]
+            if eligible:
+                best = max(eligible, key=lambda c: c.max_hours_week - (teacher_loads[c.id] + r.hours))
+                teacher_loads[best.id] += r.hours
+                substitutes_used.add(best.name)
+                reassignments_desc.append(f"{r.course} -> {best.name}")
+                r_copy = copy.copy(r)
+                r_copy.instructor = best.id
+                full_reqs.append(r_copy)
+            else:
+                full_reqs.append(r)
+        else:
+            full_reqs.append(r)
+
     from .solver.engine import generate
-    result = generate(changed_reqs, rooms, instructors, locked=kept)
-    return result, {"affected_entries": len(affected), "changed_entries": len(result.entries) - len(kept), "message": "A minimal-change attempt retained unaffected entries."}
+    result = generate(full_reqs, rooms, candidates, locked=kept)
+    changed = len(result.entries) - len(kept)
+    sub_names = ", ".join(sorted(substitutes_used)) if substitutes_used else "None"
+    msg = (
+        f"Reallocated {changed} session(s) from {absent_name} to substitute faculty ({sub_names}). "
+        f"All {len(kept)} unaffected sessions remained locked in place."
+        if changed > 0 else
+        f"Could not find substitute faculty with sufficient capacity for {absent_name}'s classes."
+    )
+    return result, {
+        "affected_entries": len(affected),
+        "changed_entries": changed,
+        "substitutes": list(substitutes_used),
+        "reassignments": reassignments_desc,
+        "message": msg
+    }
 
 
 def export_csv(entries):
     lines = ["Course,Cohort,Instructor,Room,Day,Period,Length"]
-    lines += [f"{e.course},{e.cohort},{e.instructor},{e.room},{e.day},{e.period},{e.length}" for e in entries]
+    lines += [f'"{e.course}","{e.cohort}","{e.instructor}","{e.room}",{e.day},{e.period},{e.length}' for e in entries]
     return "\n".join(lines)
 
 
@@ -109,8 +162,20 @@ def export_room_csv(entries, room_id):
 
 def export_ical(entries):
     days = {"Mon": "MO", "Tue": "TU", "Wed": "WE", "Thu": "TH", "Fri": "FR"}
+    day_dates = {"Mon": "20260105", "Tue": "20260106", "Wed": "20260107", "Thu": "20260108", "Fri": "20260109"}
     lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//ChronosAI//EN"]
     for i, e in enumerate(entries):
         start_hour = 8 + e.period
-        lines += ["BEGIN:VEVENT", f"UID:chronos-{i}@local", f"SUMMARY:{e.course} ({e.cohort})", f"LOCATION:{e.room}", f"RRULE:FREQ=WEEKLY;BYDAY={days[e.day]}", f"DTSTART:20260105T{start_hour:02}0000", f"DTEND:20260105T{start_hour + e.length:02}0000", "END:VEVENT"]
-    return "\n".join(lines + ["END:VCALENDAR"])
+        date_str = day_dates.get(e.day, "20260105")
+        byday = days.get(e.day, "MO")
+        lines += [
+            "BEGIN:VEVENT",
+            f"UID:chronos-{i}@local",
+            f"SUMMARY:{e.course} ({e.cohort})",
+            f"LOCATION:{e.room}",
+            f"RRULE:FREQ=WEEKLY;BYDAY={byday}",
+            f"DTSTART:{date_str}T{start_hour:02}0000",
+            f"DTEND:{date_str}T{start_hour + e.length:02}0000",
+            "END:VEVENT"
+        ]
+    return "\r\n".join(lines + ["END:VCALENDAR"])

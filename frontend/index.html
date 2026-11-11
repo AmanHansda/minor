@@ -677,7 +677,7 @@
           <button class="secondary" onclick="saveData()">
             💾 Save Input Data
           </button>
-          <button class="secondary" onclick="loadDemo()">
+          <button class="secondary" onclick="loadDemo(true)">
             ↺ Reload Demo Data
           </button>
         </div>
@@ -705,6 +705,10 @@
           <button class="sm secondary" onclick="cancelEdit('group')">Cancel</button>
         </div>
         <div class="form-grid">
+          <div class="form-field">
+            <label>Group Code (Optional)</label>
+            <input id="groupCode" placeholder="e.g. CSE-S3-A">
+          </div>
           <div class="form-field">
             <label>Department</label>
             <input id="groupDepartment" value="CSE" placeholder="e.g. CSE">
@@ -1055,15 +1059,25 @@
       document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
       $(name)?.classList.add('active');
       document.querySelector(`[data-panel="${name}"]`)?.classList.add('active');
+      if (name === 'student') renderStudentSheet();
+      else if (name === 'teacher') renderTeacherSheet();
+      else if (name === 'room') renderRoomSheet();
     }
 
     // Helper: Formatted group ID
     function formatGroupId(g) {
+      if (g.code) return g.code;
+      if (g.id) return g.id;
       const dept = g.department || 'GEN';
       const prog = (g.program || 'BTech').replace(/[\s.]/g, '');
       const yr = (g.year || '1stYear').replace(/[\s.]/g, '');
       const sec = g.section ? `-${g.section.trim().toUpperCase()}` : '';
       return `${dept}-${prog}-${yr}${sec}`;
+    }
+
+    function getBaseCohort(c) {
+      if (!c) return '';
+      return c.split('::')[0].replace(/-B\d+$/i, '');
     }
 
     function getTeacherName(id) {
@@ -1185,7 +1199,7 @@
               <td>${esc(getTeacherName(req.instructor))}</td>
               <td class="num">${req.hours} hrs</td>
               <td class="num">${req.block_size}h block</td>
-              <td><span class="slot-badge ${req.allocation_type==='LAB'?'lab-badge':''}">${esc(req.allocation_type || 'CLASS')}</span></td>
+              <td><span class="slot-badge ${req.allocation_type==='LAB'||req.room_type==='LAB'?'lab-badge':''}">${esc(req.allocation_type || (req.room_type==='LAB'?'LAB':(req.room_type==='CLASSROOM'?'TUTORIAL':'CLASS')))}</span></td>
               <td>
                 <button class="sm secondary" onclick="editRecord('allocation', ${i})">Edit</button>
                 <button class="sm danger-outline" onclick="deleteRecord('allocation', ${i})">Delete</button>
@@ -1203,7 +1217,7 @@
       // Cohorts for Allocations Form
       const groupOptions = data.class_groups.map(g => {
         const id = formatGroupId(g);
-        return `<option value="${esc(id)}">${esc(g.department)} ${esc(g.program)} ${esc(g.year)} ${esc(g.section||'')}</option>`;
+        return `<option value="${esc(id)}">${esc(id)} — ${esc(g.department)} ${esc(g.program)} ${esc(g.year)} ${esc(g.section||'')}</option>`;
       }).join('');
       $('cohortSelectInput').innerHTML = groupOptions || '<option value="">No classes defined</option>';
 
@@ -1217,8 +1231,8 @@
       // Class Sheet Selector
       const allCohorts = [...new Set([
         ...data.class_groups.map(g => formatGroupId(g)),
-        ...data.requirements.map(r => r.cohort.split('::')[0])
-      ])];
+        ...data.requirements.map(r => getBaseCohort(r.cohort))
+      ])].filter(Boolean);
       $('classSheetSelect').innerHTML = allCohorts.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
 
       // Teacher Sheet Selector
@@ -1228,20 +1242,31 @@
       $('roomSheetSelect').innerHTML = data.rooms.map(r => `<option value="${esc(r.id)}">${esc(r.id)} — ${esc(r.name)} (${esc(r.room_type)})</option>`).join('');
     }
 
-    // Load Demo Data
-    async function loadDemo() {
+    // Load Demo Data / Saved Data
+    async function loadDemo(isReset = false) {
       try {
-        const d = await api('/api/demo');
+        const url = isReset ? '/api/demo?reset=1' : '/api/data';
+        const d = await api(url);
         data = {
           rooms: d.rooms || [],
           instructors: d.instructors || [],
           requirements: d.requirements || [],
           class_groups: d.class_groups || []
         };
+        schedule = [];
+        activeEditing = { kind: null, index: -1 };
+        ['group', 'room', 'teacher', 'allocation'].forEach(k => cancelEdit(k));
         renderInputs();
-        showNotice('Sample university dataset loaded successfully.');
+        $('statusBar').className = 'status-badge';
+        $('statusText').textContent = 'System Ready · Draft Mode';
+        $('metricsRow').innerHTML = '';
+        renderAdminScheduleTable();
+        renderStudentSheet();
+        renderTeacherSheet();
+        renderRoomSheet();
+        showNotice(isReset ? 'Clean university demo dataset reloaded.' : 'Department data loaded successfully.');
       } catch (err) {
-        showNotice(`Failed to load demo data: ${err.message}`, true);
+        showNotice(`Failed to load data: ${err.message}`, true);
       }
     }
 
@@ -1374,6 +1399,14 @@
                     ${matching.map(e => {
                       const globalIdx = schedule.indexOf(e);
                       const isLab = e.course.toLowerCase().includes('lab');
+                      if (p > e.period) {
+                        return `
+                          <div class="slot-item ${isLab?'lab':''}" style="opacity:0.75; font-style:italic;" onclick="inspectSlot(${globalIdx})">
+                            <span class="slot-title" style="font-size:11px;">↳ ${esc(e.course)}</span>
+                            <div class="slot-meta"><span>(cont. in ${esc(e.room)})</span></div>
+                          </div>
+                        `;
+                      }
                       return `
                         <div class="slot-item ${isLab?'lab':''}" onclick="inspectSlot(${globalIdx})">
                           <span class="slot-title">${esc(e.course)}</span>
@@ -1382,7 +1415,7 @@
                             <span>Faculty: <b>${esc(getTeacherName(e.instructor))}</b></span>
                             ${!isCohortView ? `<span>Group: <code>${esc(e.cohort)}</code></span>` : ''}
                           </div>
-                          ${e.length > 1 ? `<span class="slot-badge lab-badge">${e.length}h Block</span>` : ''}
+                          ${e.length > 1 ? `<span class="slot-badge lab-badge">${e.length}h Block (P${e.period}–P${e.period+e.length-1})</span>` : ''}
                         </div>
                       `;
                     }).join('')}
@@ -1403,7 +1436,10 @@
         return;
       }
       
-      const entries = schedule.filter(e => e.cohort === selectedCohort || e.cohort.startsWith(selectedCohort + '::') || e.cohort.startsWith(selectedCohort + '-'));
+      const entries = schedule.filter(e => {
+        const base = getBaseCohort(e.cohort);
+        return e.cohort === selectedCohort || base === selectedCohort || e.cohort.startsWith(selectedCohort + '::') || e.cohort.startsWith(selectedCohort + '-');
+      });
       const gridHtml = buildWeeklyGrid(entries, true);
 
       // Subject directory
@@ -1540,14 +1576,16 @@
 
     // Form CRUD Actions
     function saveGroup() {
+      const codeInput = $('groupCode').value.trim();
       const dept = $('groupDepartment').value.trim() || 'CSE';
       const program = $('programme').value;
       const year = $('academicYear').value;
       const section = $('groupSection').value.trim();
       const students = parseInt($('groupStudents').value, 10) || 60;
 
-      const record = { department: dept, program, year, section, students };
+      const record = { department: dept, program, year, section, students, code: codeInput || undefined };
       const code = formatGroupId(record);
+      record.code = code;
 
       if (activeEditing.kind === 'group' && activeEditing.index >= 0) {
         data.class_groups[activeEditing.index] = record;
@@ -1559,6 +1597,7 @@
         } else {
           data.class_groups.push(record);
         }
+        cancelEdit('group');
       }
       renderInputs();
       showNotice(`Academic group ${code} updated.`);
@@ -1586,17 +1625,25 @@
         } else {
           data.rooms.push(record);
         }
+        cancelEdit('room');
       }
       renderInputs();
       showNotice(`Room ${id} saved.`);
+    }
+
+    function normalizeSlot(s) {
+      const m = s.trim().match(/^(mon|tue|wed|thu|fri)[a-z]*[\s\-_:]*([1-8])$/i);
+      if (!m) return s.trim();
+      const day = m[1].charAt(0).toUpperCase() + m[1].slice(1, 3).toLowerCase();
+      return `${day}-${m[2]}`;
     }
 
     function saveTeacher() {
       const id = $('teacherId').value.trim().toUpperCase();
       const name = $('teacherName').value.trim();
       const max_hours_week = parseInt($('teacherLoad').value, 10) || 18;
-      const unavailable = $('teacherUnavailable').value.split(',').map(s => s.trim()).filter(Boolean);
-      const preferred = $('teacherPreferred').value.split(',').map(s => s.trim()).filter(Boolean);
+      const unavailable = $('teacherUnavailable').value.split(',').map(normalizeSlot).filter(Boolean);
+      const preferred = $('teacherPreferred').value.split(',').map(normalizeSlot).filter(Boolean);
 
       if (!id || !name) return showNotice('Faculty ID and name are required', true);
 
@@ -1612,6 +1659,7 @@
         } else {
           data.instructors.push(record);
         }
+        cancelEdit('teacher');
       }
       renderInputs();
       showNotice(`Faculty member ${name} saved.`);
@@ -1647,6 +1695,7 @@
         } else {
           data.requirements.push(record);
         }
+        cancelEdit('allocation');
       }
       renderInputs();
       showNotice(`Course allocation for ${course} saved.`);
@@ -1659,6 +1708,7 @@
 
       if (kind === 'group') {
         const g = data.class_groups[index];
+        $('groupCode').value = g.code || formatGroupId(g);
         $('groupDepartment').value = g.department;
         $('programme').value = g.program;
         $('academicYear').value = g.year;
@@ -1693,9 +1743,9 @@
         const parts = req.course.split(' ');
         $('courseCode').value = parts[0] || '';
         $('courseName').value = parts.slice(1).join(' ') || '';
-        $('cohortSelectInput').value = req.cohort.split('::')[0];
+        $('cohortSelectInput').value = getBaseCohort(req.cohort);
         $('facultySelectInput').value = req.instructor;
-        $('allocationType').value = req.allocation_type || 'CLASS';
+        $('allocationType').value = req.allocation_type || (req.room_type==='LAB'?'LAB':(req.room_type==='CLASSROOM'?'TUTORIAL':'CLASS'));
         $('courseHours').value = req.hours;
         $('courseBlock').value = req.block_size;
         $('allocationEditText').textContent = `Editing Course Allocation: ${req.course}`;
@@ -1705,19 +1755,43 @@
     }
 
     function cancelEdit(kind) {
-      activeEditing = { kind: null, index: -1 };
+      if (activeEditing.kind === kind) {
+        activeEditing = { kind: null, index: -1 };
+      }
       if (kind === 'group') {
         $('groupEditBanner').style.display = 'none';
         $('groupSubmitBtn').textContent = 'Add Academic Group';
+        $('groupCode').value = '';
+        $('groupDepartment').value = 'CSE';
+        $('programme').value = 'B.Tech';
+        $('academicYear').value = '3rd Year';
+        $('groupSection').value = '';
+        $('groupStudents').value = '60';
       } else if (kind === 'room') {
         $('roomEditBanner').style.display = 'none';
         $('roomSubmitBtn').textContent = 'Add Room';
+        $('roomId').value = '';
+        $('roomName').value = '';
+        $('roomType').value = 'LECTURE';
+        $('roomCapacity').value = '60';
+        $('building').value = 'A';
+        $('roomDepartment').value = 'CSE';
       } else if (kind === 'teacher') {
         $('teacherEditBanner').style.display = 'none';
         $('teacherSubmitBtn').textContent = 'Add Faculty';
+        $('teacherId').value = '';
+        $('teacherName').value = '';
+        $('teacherLoad').value = '18';
+        $('teacherUnavailable').value = '';
+        $('teacherPreferred').value = '';
       } else if (kind === 'allocation') {
         $('allocationEditBanner').style.display = 'none';
         $('allocationSubmitBtn').textContent = 'Add Allocation';
+        $('courseCode').value = '';
+        $('courseName').value = '';
+        $('courseHours').value = '3';
+        $('courseBlock').value = '1';
+        $('allocationType').value = 'CLASS';
       }
     }
 
@@ -1733,7 +1807,25 @@
                  : kind === 'teacher' ? item.name
                  : item.course;
 
-      if (!confirm(`Are you sure you want to delete ${desc}?`)) return;
+      if (kind === 'teacher') {
+        const assigned = data.requirements.filter(r => r.instructor === item.id);
+        if (assigned.length > 0) {
+          if (!confirm(`Warning: ${item.name} is currently assigned to ${assigned.length} course allocation(s). Deleting will invalidate those allocations. Proceed?`)) return;
+        } else {
+          if (!confirm(`Are you sure you want to delete ${desc}?`)) return;
+        }
+      } else if (kind === 'room') {
+        const assigned = data.requirements.filter(r => r.room_type === item.room_type);
+        if (!confirm(`Are you sure you want to delete room ${desc}?`)) return;
+      } else {
+        if (!confirm(`Are you sure you want to delete ${desc}?`)) return;
+      }
+
+      if (activeEditing.kind === kind && activeEditing.index === index) {
+        cancelEdit(kind);
+      } else if (activeEditing.kind === kind && activeEditing.index > index) {
+        activeEditing.index--;
+      }
 
       list.splice(index, 1);
       renderInputs();
@@ -1749,19 +1841,21 @@
       try {
         const res = await api(`/api/absence/${teacherId}`);
         const teacherName = getTeacherName(teacherId);
+        const reassignmentsList = (res.diff.reassignments || []).map(r => `<li>${esc(r)}</li>`).join('');
         $('absenceResultBox').innerHTML = `
           <div style="background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:14px;">
             <div style="font-weight:700; color:var(--text); margin-bottom:6px;">
               Simulation Result: ${esc(teacherName)} (${esc(teacherId)})
             </div>
-            <div style="font-size:13px; color:var(--text-muted); margin-bottom:8px;">
+            <div style="font-size:13px; color:var(--text); margin-bottom:8px;">
               ${esc(res.diff.message)}
             </div>
-            <div style="display:flex; gap:16px; font-size:12px;">
+            <div style="display:flex; gap:16px; font-size:12px; margin-bottom:${reassignmentsList ? '8px' : '0'};">
               <div>Affected Sessions: <b>${res.diff.affected_entries}</b></div>
               <div>Rescheduled Sessions: <b>${res.diff.changed_entries}</b></div>
               <div>Outcome: <b style="color:${res.schedule.status==='FEASIBLE'?'var(--green)':'var(--red)'}">${res.schedule.status}</b></div>
             </div>
+            ${reassignmentsList ? `<div style="font-size:12px; margin-top:8px;"><b>Substitute Allocations:</b><ul style="margin:4px 0 0; padding-left:18px;">${reassignmentsList}</ul></div>` : ''}
           </div>
         `;
       } catch (err) {
@@ -1799,10 +1893,12 @@
 
     // Exports
     function downloadExport(type) {
+      if (!schedule.length) return showNotice('Please generate the timetable first before exporting.', true);
       window.open(`/api/export/${type}`, '_blank');
     }
 
     function exportActiveEntity(kind) {
+      if (!schedule.length) return showNotice('Please generate the timetable first before exporting.', true);
       if (kind === 'class') {
         const val = $('classSheetSelect').value;
         if (val) window.open(`/api/export/class/${encodeURIComponent(val)}`, '_blank');
