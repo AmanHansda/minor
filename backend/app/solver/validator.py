@@ -1,5 +1,6 @@
 """Single source of truth for timetable safety rules."""
 from collections import defaultdict
+import re
 from .models import Entry, Requirement, Room, Instructor
 
 DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"]
@@ -7,21 +8,47 @@ DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"]
 PERIODS = range(1, 9)
 BREAKS = {5}
 
+# Matches any automatic batch suffix added during expansion:
+#   ::LAB-1  ::TUTORIAL-2  -B1  -B2  _B3  :b1  etc.
+_BATCH_SUFFIX_RE = re.compile(r"(::[A-Z]+-\d+|[-_:][Bb]\d+)\s*$")
+
 
 def occupied(entry: Entry):
     return [(entry.day, period) for period in range(entry.period, entry.period + entry.length)]
 
 
 def parent_group(cohort: str) -> str:
-    """Return the academic group before an automatic tutorial/lab batch suffix."""
-    return cohort.split("::", 1)[0]
+    """Return the base academic group, stripping any automatic batch suffix.
+
+    Handles both naming conventions:
+      - ``::LAB-1``  / ``::TUTORIAL-2``  (produced by read_data in main.py)
+      - ``-B1`` / ``-B2`` / ``_b3``      (used in sample_data.py & legacy data)
+    """
+    return _BATCH_SUFFIX_RE.sub("", cohort).strip()
+
+
+def is_batch_cohort(cohort: str) -> bool:
+    """True when the cohort string represents a sub-batch, not the whole class."""
+    return bool(_BATCH_SUFFIX_RE.search(cohort))
 
 
 def group_conflict(first: Entry, second: Entry) -> bool:
-    """A full class blocks every batch; distinct batches may run in parallel."""
+    """Return True when the two entries cannot be scheduled at the same time.
+
+    Rules:
+    - Different base cohorts → no conflict (always safe).
+    - Same base cohort, both are sub-batches → no conflict (parallel labs/tutorials allowed).
+    - Same base cohort, at least one is the whole class → conflict (all students are present).
+    - Same base cohort, same sub-batch → conflict (same students).
+    """
     if parent_group(first.cohort) != parent_group(second.cohort):
         return False
-    return "::" not in first.cohort or "::" not in second.cohort or first.cohort == second.cohort
+    first_is_batch = is_batch_cohort(first.cohort)
+    second_is_batch = is_batch_cohort(second.cohort)
+    # Both are distinct sub-batches → allowed to run in parallel
+    if first_is_batch and second_is_batch and first.cohort != second.cohort:
+        return False
+    return True
 
 
 def validate(entries, requirements, rooms, instructors):

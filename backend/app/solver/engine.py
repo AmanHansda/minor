@@ -1,6 +1,6 @@
 """A transparent deterministic heuristic. Swap with OR-Tools in a future iteration."""
 from .models import Entry, Schedule
-from .validator import DAYS, PERIODS, BREAKS, validate, occupied, group_conflict
+from .validator import DAYS, PERIODS, BREAKS, validate, occupied, group_conflict, parent_group
 
 
 def _candidate_slots(req, teacher=None, existing_entries=None):
@@ -15,9 +15,9 @@ def _candidate_slots(req, teacher=None, existing_entries=None):
     cohort_days = set()
     cohort_slots_by_day = {}
     if existing_entries:
-        base_cohort = req.cohort.split("::")[0]
+        base_cohort = parent_group(req.cohort)
         for e in existing_entries:
-            if e.cohort == req.cohort or e.cohort.split("::")[0] == base_cohort:
+            if e.cohort == req.cohort or parent_group(e.cohort) == base_cohort:
                 cohort_days.add(e.day)
                 cohort_slots_by_day.setdefault(e.day, []).extend(range(e.period, e.period + e.length))
 
@@ -72,9 +72,12 @@ def generate(requirements, rooms, instructors, locked=None):
 
     ordered = sorted(requirements, key=lambda r: (len([x for x in rooms if x.room_type == r.room_type and x.capacity >= r.students]), -r.block_size, -r.hours))
     for req in ordered:
-        remaining = req.hours
+        placed_hours = sum(e.length for e in entries if e.requirement_id == req.id)
+        remaining = req.hours - placed_hours
+        if remaining <= 0:
+            continue
         teacher = teacher_by_id.get(req.instructor)
-        while remaining:
+        while remaining > 0:
             placed = False
             for day, period in _candidate_slots(req, teacher=teacher, existing_entries=entries):
                 for room in rooms:
