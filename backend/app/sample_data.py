@@ -22,11 +22,18 @@ def load_demo():
         Requirement("R4", "Discrete Mathematics", "CSE-S3-A", "I2", 60, 3, 1, "LECTURE", allocation_type="CLASS"),
         Requirement("R5", "Database Systems", "CSE-S3-A", "I3", 60, 3, 1, "CLASSROOM", allocation_type="CLASS"),
         Requirement("R6", "Database Lab [LAB Group 1]", "CSE-S3-A::LAB-1", "I3", 30, 2, 2, "LAB", allocation_type="LAB"),
+        Requirement("R7", "Database Lab [LAB Group 2]", "CSE-S3-A::LAB-2", "I3", 30, 2, 2, "LAB", allocation_type="LAB"),
+        # Second cohort: CSE-S3-B (demonstrates multi-cohort scheduling)
+        Requirement("R8", "Data Structures", "CSE-S3-B", "I2", 55, 3, 1, "LECTURE", allocation_type="CLASS"),
+        Requirement("R9", "Database Systems", "CSE-S3-B", "I1", 55, 3, 1, "CLASSROOM", allocation_type="CLASS"),
+        Requirement("R10", "Data Structures Lab [LAB Group 1]", "CSE-S3-B::LAB-1", "I4", 28, 2, 2, "LAB", allocation_type="LAB"),
+        Requirement("R11", "Data Structures Lab [LAB Group 2]", "CSE-S3-B::LAB-2", "I4", 27, 2, 2, "LAB", allocation_type="LAB"),
     ]
     return reqs, rooms, instructors
 
 
 def load_demo_groups():
     return [
-        {"code": "CSE-S3-A", "program": "B.Tech", "year": "3rd Year", "section": "A", "students": 60, "department": "CSE"}
+        {"code": "CSE-S3-A", "program": "B.Tech", "year": "3rd Year", "section": "A", "students": 60, "department": "CSE"},
+        {"code": "CSE-S3-B", "program": "B.Tech", "year": "3rd Year", "section": "B", "students": 55, "department": "CSE"},
     ]

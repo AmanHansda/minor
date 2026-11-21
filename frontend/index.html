@@ -878,6 +878,13 @@
             <label>Consecutive Block Length</label>
             <input id="courseBlock" type="number" value="1" min="1" max="4">
           </div>
+          <div class="form-field" style="justify-content: flex-end; padding-bottom: 4px;">
+            <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; font-weight:600;">
+              <input id="accessibleRoom" type="checkbox" style="width:15px;height:15px;margin:0;accent-color:var(--accent);">
+              Accessible Room Required
+            </label>
+            <span style="font-size:11px; color:var(--text-muted);">Disability-access compliant facility</span>
+          </div>
           <button class="primary" onclick="saveAllocation()" id="allocationSubmitBtn">Add Allocation</button>
         </div>
         <div class="table-wrap">
@@ -1673,6 +1680,7 @@
       const type = $('allocationType').value;
       const hours = parseInt($('courseHours').value, 10) || 3;
       const block_size = type === 'LAB' ? Math.max(2, parseInt($('courseBlock').value, 10) || 2) : 1;
+      const accessible_room = $('accessibleRoom').checked;
 
       if (!code || !name || !cohort || !instructor) {
         return showNotice('Please enter course code, name, cohort, and instructor.', true);
@@ -1683,7 +1691,7 @@
       const students = data.class_groups.find(g => formatGroupId(g) === cohort)?.students || 60;
       const room_type = type === 'LAB' ? 'LAB' : (type === 'TUTORIAL' ? 'CLASSROOM' : 'LECTURE');
 
-      const record = { id, course, cohort, instructor, students, hours, block_size, room_type, allocation_type: type };
+      const record = { id, course, cohort, instructor, students, hours, block_size, room_type, accessible_room, allocation_type: type };
 
       if (activeEditing.kind === 'allocation' && activeEditing.index >= 0) {
         data.requirements[activeEditing.index] = record;
@@ -1748,6 +1756,7 @@
         $('allocationType').value = req.allocation_type || (req.room_type==='LAB'?'LAB':(req.room_type==='CLASSROOM'?'TUTORIAL':'CLASS'));
         $('courseHours').value = req.hours;
         $('courseBlock').value = req.block_size;
+        $('accessibleRoom').checked = !!req.accessible_room;
         $('allocationEditText').textContent = `Editing Course Allocation: ${req.course}`;
         $('allocationEditBanner').style.display = 'flex';
         $('allocationSubmitBtn').textContent = 'Update Allocation';
@@ -1792,6 +1801,7 @@
         $('courseHours').value = '3';
         $('courseBlock').value = '1';
         $('allocationType').value = 'CLASS';
+        $('accessibleRoom').checked = false;
       }
     }
 
@@ -1815,8 +1825,12 @@
           if (!confirm(`Are you sure you want to delete ${desc}?`)) return;
         }
       } else if (kind === 'room') {
-        const assigned = data.requirements.filter(r => r.room_type === item.room_type);
-        if (!confirm(`Are you sure you want to delete room ${desc}?`)) return;
+        const dependentAllocs = data.requirements.filter(r => r.room_type === item.room_type);
+        if (dependentAllocs.length > 0) {
+          if (!confirm(`Warning: Deleting room "${desc}" (${item.room_type}) — ${dependentAllocs.length} course allocation(s) require a room of type ${item.room_type}. If no other ${item.room_type} room exists, those allocations will fail. Proceed?`)) return;
+        } else {
+          if (!confirm(`Are you sure you want to delete room ${desc}?`)) return;
+        }
       } else {
         if (!confirm(`Are you sure you want to delete ${desc}?`)) return;
       }

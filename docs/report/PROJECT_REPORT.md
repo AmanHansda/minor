@@ -124,16 +124,25 @@ The dashboard contains a Generate Timetable button, export buttons, absence simu
 
 ## 12 Testing
 
-The project has four automated unit tests.
+The project has thirteen automated unit tests.
 
 | Test | Result |
 |---|---|
 | Demo data generates a feasible timetable | Pass |
 | Validator detects a room conflict | Pass |
-| Quality report returns hard-violation and resilience values | Pass |
+| Quality report returns hard-violation, resilience and preference values | Pass |
 | Chat answers a course-location question | Pass |
+| Chat answers lunch, clash, instructor ID and room availability queries | Pass |
+| Input payload is converted to domain data with preferences | Pass |
+| Tutorial and lab requirements are expanded into correct batch groups | Pass |
+| Read data preserves room types on resave (no double-expansion) | Pass |
+| Full-class lecture conflicts with lab batch; distinct batches can overlap | Pass |
+| Per-entity CSV exports contain correct cohort, teacher and room entries | Pass |
+| iCalendar export is RFC 5545 compliant with correct weekday start dates | Pass |
+| Generated schedule never has a room double-booking | Pass |
+| Absent-teacher reschedule preserves unaffected sessions and reassigns cleanly | Pass |
 
-Run tests using `python -m unittest discover -s backend/tests -v`. The test run completed with four tests passing.
+Run tests using `python -m unittest discover -s backend/tests -v`. The test run completed with thirteen tests passing.
 
 ## 13 Results
 

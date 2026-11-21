@@ -28,7 +28,7 @@ backend/app/solver/models.py     Room, Instructor, Requirement, Entry data objec
 backend/app/services.py          Quality report, slot explanation, absence flow, CSV/iCal/entity exports
 backend/app/chatbot.py           Read-only timetable help assistant
 backend/app/storage.py           Local JSON persistence for pilot data
-backend/tests/test_solver.py     Automated test suite (9 unit tests passing)
+backend/tests/test_solver.py     Automated test suite (13 unit tests passing)
 docs/constraints.md              Constraint documentation
 docs/DECISIONS.md                Key architectural design decisions (D1-D7)
 docs/PILOT_DEPLOYMENT.md         Pilot deployment guidance

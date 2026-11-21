@@ -35,7 +35,28 @@ def answer(message, entries, instructors, rooms):
 
     # 3. Feasibility / clash query
     if any(w in text for w in ("clash", "violation", "feasible", "conflict", "safe")):
-        return f"The active schedule contains {len(entries)} placed sessions across the weekly grid with 0 hard clashes."
+        from .solver.validator import validate as _validate
+        # Import rooms/instructors not available here — use a lightweight check on entries only.
+        # We can detect H3/H4 (teacher and room overlap) directly from entries.
+        from collections import defaultdict as _dd
+        _seen = _dd(list)
+        _conflicts = []
+        for _e in entries:
+            for _p in range(_e.period, _e.period + _e.length):
+                for _key in (("room", _e.room), ("teacher", _e.instructor)):
+                    _seen[(_key, _e.day, _p)].append(_e.course)
+        for (_res, _day, _p), _courses in _seen.items():
+            if len(_courses) > 1:
+                _code = "H4" if _res[0] == "room" else "H3"
+                _conflicts.append(f"{_code} conflict on {_day} P{_p}: {', '.join(_courses)}")
+        if _conflicts:
+            return (
+                f"WARNING: The active schedule has {len(_conflicts)} detected hard clash(es): "
+                + "; ".join(_conflicts[:3])
+                + (f" (and {len(_conflicts)-3} more)" if len(_conflicts) > 3 else "")
+                + ". Generate a fresh timetable to resolve."
+            )
+        return f"The active schedule contains {len(entries)} placed sessions across the weekly grid with 0 hard clashes (H3/H4 verified)."
 
     # 4. Course schedule query
     # Look for matching course in entries
