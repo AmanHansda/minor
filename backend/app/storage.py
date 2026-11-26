@@ -8,9 +8,9 @@ from pathlib import Path
 from .solver.models import Room, Instructor, Requirement
 
 
-def save_input(path: Path, requirements, rooms, instructors, class_groups=None):
+def save_input(path: Path, requirements, rooms, instructors, class_groups=None, config=None):
     path.parent.mkdir(parents=True, exist_ok=True)
-    payload = {"requirements": [x.__dict__ for x in requirements], "rooms": [x.__dict__ for x in rooms], "instructors": [x.__dict__ for x in instructors], "class_groups": class_groups or []}
+    payload = {"requirements": [x.__dict__ for x in requirements], "rooms": [x.__dict__ for x in rooms], "instructors": [x.__dict__ for x in instructors], "class_groups": class_groups or [], "config": config or {"lunch_time": "13:00"}}
     path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
 
@@ -21,4 +21,4 @@ def load_input(path: Path):
     rooms = [Room(**x) for x in body["rooms"]]
     instructors = [Instructor(**x) for x in body["instructors"]]
     requirements = [Requirement(**x) for x in body["requirements"]]
-    return requirements, rooms, instructors, body.get("class_groups", [])
+    return requirements, rooms, instructors, body.get("class_groups", []), body.get("config", {"lunch_time": "13:00"})

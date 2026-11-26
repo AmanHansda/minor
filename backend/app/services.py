@@ -3,7 +3,7 @@ from .solver.models import Entry
 from .solver.validator import occupied, validate
 
 
-def quality_report(entries, requirements, rooms, instructors):
+def quality_report(entries, requirements, rooms, instructors, lunch_period=5):
     gaps = 0
     early = 0
     by_cohort = defaultdict(lambda: defaultdict(list))
@@ -37,7 +37,7 @@ def quality_report(entries, requirements, rooms, instructors):
     preference_score = round(100 * pref_hours_met / max(1, pref_hours_possible), 1) if pref_hours_possible else 100.0
 
     return {
-        "hard_violations": len(validate(entries, requirements, rooms, instructors)),
+        "hard_violations": len(validate(entries, requirements, rooms, instructors, lunch_period=lunch_period)),
         "gaps": gaps,
         "early_periods": early,
         "rooms_used": used_rooms,
@@ -72,7 +72,7 @@ def explain_slot(entry, requirements, rooms, instructors):
     }
 
 
-def absent_reschedule(schedule, absent_instructor, requirements, rooms, instructors):
+def absent_reschedule(schedule, absent_instructor, requirements, rooms, instructors, lunch_period=5):
     import copy
     affected = [e for e in schedule.entries if e.instructor == absent_instructor]
     kept = [e for e in schedule.entries if e.instructor != absent_instructor]
@@ -115,7 +115,7 @@ def absent_reschedule(schedule, absent_instructor, requirements, rooms, instruct
             full_reqs.append(r)
 
     from .solver.engine import generate
-    result = generate(full_reqs, rooms, candidates, locked=kept)
+    result = generate(full_reqs, rooms, candidates, locked=kept, lunch_period=lunch_period)
     changed = len(result.entries) - len(kept)
     sub_names = ", ".join(sorted(substitutes_used)) if substitutes_used else "None"
     msg = (

@@ -689,6 +689,20 @@
 
       <div id="statusNotice" class="form-notice"></div>
 
+      <div class="card">
+        <div class="card-header"><div><h3 class="card-title">Input Method &amp; Schedule Configuration</h3><p class="card-desc">Use manual entry or import the official Excel workbook. Both use the same validation and scheduling process.</p></div></div>
+        <div class="form-grid">
+          <div class="form-field"><label>Input Method</label><select id="inputMethod" onchange="toggleImportArea()"><option value="manual">Manual Entry</option><option value="excel">Excel Upload</option></select></div>
+          <div class="form-field"><label>Lunch Start Time</label><input id="lunchTime" type="time" value="13:00" min="09:00" max="16:00" step="3600"></div>
+        </div>
+        <div id="excelImportArea" style="display:none; margin-top:14px; border:1px dashed var(--border); border-radius:8px; padding:16px; background:var(--bg);">
+          <div class="btn-group"><button class="secondary" onclick="window.location.href='/api/template.xlsx'">Download Excel Template</button><input id="excelFile" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onchange="uploadExcel()"></div>
+          <p id="uploadStatus" style="font-size:12px;color:var(--text-muted);margin:10px 0 0;">Download the template, fill each sheet, then select the completed .xlsx file.</p>
+          <div id="importPreview" class="table-wrap" style="display:none;margin-top:12px;"></div>
+          <button id="confirmImportBtn" class="primary" style="display:none;margin-top:12px;" onclick="confirmExcelImport()">Confirm and Apply Imported Data</button>
+        </div>
+      </div>
+
       <!-- Quality Metrics Grid -->
       <div id="metricsRow" class="metrics-grid"></div>
 
@@ -1029,7 +1043,8 @@
       rooms: [],
       instructors: [],
       requirements: [],
-      class_groups: []
+      class_groups: [],
+      config: { lunch_time: '13:00' }
     };
     let schedule = [];
     let activeEditing = { kind: null, index: -1 };
@@ -1105,6 +1120,36 @@
       } else {
         $('courseBlock').value = 1;
       }
+    }
+
+    function lunchDisplay() {
+      const start = $('lunchTime').value || '13:00';
+      return `${start} – ${String(parseInt(start.slice(0, 2), 10) + 1).padStart(2, '0')}:00`;
+    }
+
+    let pendingImport = null;
+    function toggleImportArea() { $('excelImportArea').style.display = $('inputMethod').value === 'excel' ? 'block' : 'none'; }
+    function uploadExcel() {
+      const file = $('excelFile').files[0];
+      if (!file) return;
+      if (!file.name.toLowerCase().endsWith('.xlsx')) return showNotice('Please choose an .xlsx workbook.', true);
+      const form = new FormData(); form.append('file', file);
+      $('uploadStatus').textContent = `Validating ${file.name}...`;
+      fetch('/api/import.xlsx', { method: 'POST', body: form }).then(async res => {
+        const result = await res.json(); if (!res.ok) throw new Error(result.error || 'Upload failed'); return result;
+      }).then(result => {
+        pendingImport = result.data; const d = pendingImport;
+        $('uploadStatus').textContent = `${file.name} validated. Review the imported records below.`;
+        $('importPreview').style.display = 'block';
+        $('importPreview').innerHTML = `<table class="data-table"><thead><tr><th>Academic Groups</th><th>Rooms</th><th>Faculty</th><th>Allocations</th><th>Lunch Time</th></tr></thead><tbody><tr><td>${d.class_groups.length}</td><td>${d.rooms.length}</td><td>${d.instructors.length}</td><td>${d.requirements.length}</td><td>${esc(d.config.lunch_time)}</td></tr></tbody></table>`;
+        $('confirmImportBtn').style.display = 'inline-flex';
+      }).catch(err => { pendingImport = null; $('confirmImportBtn').style.display = 'none'; $('importPreview').style.display = 'none'; $('uploadStatus').textContent = `Validation error: ${err.message}`; showNotice(`Excel upload failed: ${err.message}`, true); });
+    }
+    function confirmExcelImport() {
+      if (!pendingImport) return showNotice('Upload a valid workbook first.', true);
+      data = pendingImport; $('lunchTime').value = data.config.lunch_time; pendingImport = null;
+      renderInputs(); $('inputMethod').value = 'manual'; toggleImportArea();
+      showNotice('Excel data applied. You can now edit any record or generate the timetable.');
     }
 
     // Notifications
@@ -1258,8 +1303,10 @@
           rooms: d.rooms || [],
           instructors: d.instructors || [],
           requirements: d.requirements || [],
-          class_groups: d.class_groups || []
+          class_groups: d.class_groups || [],
+          config: d.config || { lunch_time: '13:00' }
         };
+        $('lunchTime').value = data.config.lunch_time || '13:00';
         schedule = [];
         activeEditing = { kind: null, index: -1 };
         ['group', 'room', 'teacher', 'allocation'].forEach(k => cancelEdit(k));
@@ -1280,6 +1327,7 @@
     // Save Data to Backend Storage
     async function saveData() {
       try {
+        data.config = { lunch_time: $('lunchTime').value || '13:00' };
         const res = await api('/api/data', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1374,20 +1422,16 @@
     // Universal Weekly Grid Generator
     function buildWeeklyGrid(filteredEntries, isCohortView = false) {
       const periods = [1, 2, 3, 4, 5, 6, 7, 8];
+      const lunchPeriod = (parseInt(($('lunchTime').value || '13:00').slice(0, 2), 10) - 9) + 1;
+      const lunchStart = $('lunchTime').value || '13:00';
+      const lunchEnd = `${String(parseInt(lunchStart.slice(0, 2), 10) + 1).padStart(2, '0')}:00`;
       
       return `
         <table class="timetable-grid">
           <thead>
             <tr>
               <th class="day-col">Day</th>
-              <th class="period-header">Period 1<br><small>9:00 - 10:00</small></th>
-              <th class="period-header">Period 2<br><small>10:00 - 11:00</small></th>
-              <th class="period-header">Period 3<br><small>11:00 - 12:00</small></th>
-              <th class="period-header">Period 4<br><small>12:00 - 1:00</small></th>
-              <th class="lunch-header">Lunch Break<br><small>1:00 - 2:00</small></th>
-              <th class="period-header">Period 6<br><small>2:00 - 3:00</small></th>
-              <th class="period-header">Period 7<br><small>3:00 - 4:00</small></th>
-              <th class="period-header">Period 8<br><small>4:00 - 5:00</small></th>
+              ${periods.map(p => p === lunchPeriod ? `<th class="lunch-header">Lunch Break<br><small>${lunchStart} - ${lunchEnd}</small></th>` : `<th class="period-header">Period ${p}<br><small>${esc(PERIOD_LABELS[p])}</small></th>`).join('')}
             </tr>
           </thead>
           <tbody>
@@ -1395,8 +1439,8 @@
               <tr>
                 <th class="day-col">${day}</th>
                 ${periods.map(p => {
-                  if (p === 5) {
-                    return `<td class="lunch-cell">LUNCH BREAK (1:00 - 2:00 PM)</td>`;
+                  if (p === lunchPeriod) {
+                    return `<td class="lunch-cell">LUNCH BREAK (${lunchStart} - ${lunchEnd})</td>`;
                   }
                   const matching = filteredEntries.filter(e => e.day === day && p >= e.period && p < e.period + e.length);
                   if (!matching.length) {
@@ -1479,7 +1523,7 @@
         <div class="sheet-header">
           <h4>CHRONOS UNIVERSITY — SCHOOL OF ENGINEERING &amp; TECHNOLOGY</h4>
           <h2>ACADEMIC CLASS TIMETABLE — ${esc(selectedCohort)}</h2>
-          <div class="sheet-meta">Weekly Schedule · Mon to Fri (9:00 AM – 5:00 PM) · Lunch Break: 1:00 PM – 2:00 PM · Official Version</div>
+          <div class="sheet-meta">Weekly Schedule · Mon to Fri (9:00 AM – 5:00 PM) · Lunch Break: ${esc(lunchDisplay())} · Official Version</div>
         </div>
         <div class="grid-table-wrap">${gridHtml}</div>
         ${directoryHtml}

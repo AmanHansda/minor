@@ -6,7 +6,7 @@ from .models import Entry, Requirement, Room, Instructor
 DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"]
 # 9am to 5pm with period 5 (1pm to 2pm) reserved for lunch.
 PERIODS = range(1, 9)
-BREAKS = {5}
+DEFAULT_LUNCH_PERIOD = 5
 
 # Matches any automatic batch suffix added during expansion:
 #   ::LAB-1  ::TUTORIAL-2  -B1  -B2  _B3  :b1  etc.
@@ -51,7 +51,7 @@ def group_conflict(first: Entry, second: Entry) -> bool:
     return True
 
 
-def validate(entries, requirements, rooms, instructors):
+def validate(entries, requirements, rooms, instructors, lunch_period=DEFAULT_LUNCH_PERIOD):
     req_by_id = {r.id: r for r in requirements}
     room_by_id = {r.id: r for r in rooms}
     teacher_by_id = {i.id: i for i in instructors}
@@ -69,7 +69,7 @@ def validate(entries, requirements, rooms, instructors):
             errors.append(f"H1: {entry.course} has wrong block length")
         if entry.day not in DAYS or entry.period not in PERIODS or entry.period + entry.length - 1 > 8:
             errors.append(f"H8: {entry.course} is outside the time grid")
-        if any(p in BREAKS for _, p in occupied(entry)):
+        if any(p == lunch_period for _, p in occupied(entry)):
             errors.append(f"H7: {entry.course} crosses the lunch break")
         if room.room_type != req.room_type:
             errors.append(f"H5: {entry.course} needs {req.room_type}")
