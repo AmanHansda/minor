@@ -11,7 +11,7 @@ DAYS_MAP = {
 }
 
 
-def answer(message, entries, instructors, rooms):
+def answer(message, entries, instructors, rooms, lunch_time="13:00"):
     if not entries:
         return "Please generate the timetable first, then I can answer timetable questions."
 
@@ -31,7 +31,9 @@ def answer(message, entries, instructors, rooms):
 
     # 2. Lunch break query
     if "lunch" in text:
-        return "Period 5 (1:00 PM – 2:00 PM) is the inviolable university-wide lunch break every day from Monday to Friday."
+        hour = int(lunch_time[:2])
+        period = hour - 8
+        return f"Period {period} ({lunch_time} – {hour + 1:02d}:00) is the inviolable university-wide lunch break every day from Monday to Friday."
 
     # 3. Feasibility / clash query
     if any(w in text for w in ("clash", "violation", "feasible", "conflict", "safe")):

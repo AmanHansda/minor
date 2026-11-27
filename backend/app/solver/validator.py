@@ -6,11 +6,12 @@ from .models import Entry, Requirement, Room, Instructor
 DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"]
 # 9am to 5pm with period 5 (1pm to 2pm) reserved for lunch.
 PERIODS = range(1, 9)
-BREAKS = {5}
+DEFAULT_LUNCH_PERIOD = 5
 
 # Matches any automatic batch suffix added during expansion:
 #   ::LAB-1  ::TUTORIAL-2  -B1  -B2  _B3  :b1  etc.
 _BATCH_SUFFIX_RE = re.compile(r"(::[A-Z]+-\d+|[-_:][Bb]\d+)\s*$")
+_TYPED_BATCH_RE = re.compile(r"::([A-Z]+)-\d+\s*$")
 
 
 def occupied(entry: Entry):
@@ -32,12 +33,25 @@ def is_batch_cohort(cohort: str) -> bool:
     return bool(_BATCH_SUFFIX_RE.search(cohort))
 
 
+def batch_type(cohort: str):
+    """Return the activity type for modern batch IDs, if present.
+
+    ``CSE-S3-A::LAB-1`` and ``CSE-S3-A::TUTORIAL-1`` identify different
+    student splits.  A legacy ``-B1`` suffix has no activity type, so it is
+    treated conservatively and is never assumed safe to overlap.
+    """
+    match = _TYPED_BATCH_RE.search(cohort)
+    return match.group(1) if match else None
+
+
 def group_conflict(first: Entry, second: Entry) -> bool:
     """Return True when the two entries cannot be scheduled at the same time.
 
     Rules:
     - Different base cohorts → no conflict (always safe).
-    - Same base cohort, both are sub-batches → no conflict (parallel labs/tutorials allowed).
+    - Same base cohort, distinct batches of the same activity type may run in parallel.
+    - Lab and tutorial batches of the same cohort conflict: a student may belong
+      to both splits and cannot attend both activities at once.
     - Same base cohort, at least one is the whole class → conflict (all students are present).
     - Same base cohort, same sub-batch → conflict (same students).
     """
@@ -45,13 +59,18 @@ def group_conflict(first: Entry, second: Entry) -> bool:
         return False
     first_is_batch = is_batch_cohort(first.cohort)
     second_is_batch = is_batch_cohort(second.cohort)
-    # Both are distinct sub-batches → allowed to run in parallel
-    if first_is_batch and second_is_batch and first.cohort != second.cohort:
+    # Parallel work is safe only for explicitly typed sibling batches, such as
+    # LAB-1 and LAB-2. Different activity types must not overlap.
+    if (
+        first_is_batch and second_is_batch and first.cohort != second.cohort
+        and batch_type(first.cohort) is not None
+        and batch_type(first.cohort) == batch_type(second.cohort)
+    ):
         return False
     return True
 
 
-def validate(entries, requirements, rooms, instructors):
+def validate(entries, requirements, rooms, instructors, lunch_period=DEFAULT_LUNCH_PERIOD):
     req_by_id = {r.id: r for r in requirements}
     room_by_id = {r.id: r for r in rooms}
     teacher_by_id = {i.id: i for i in instructors}
@@ -69,7 +88,7 @@ def validate(entries, requirements, rooms, instructors):
             errors.append(f"H1: {entry.course} has wrong block length")
         if entry.day not in DAYS or entry.period not in PERIODS or entry.period + entry.length - 1 > 8:
             errors.append(f"H8: {entry.course} is outside the time grid")
-        if any(p in BREAKS for _, p in occupied(entry)):
+        if any(p == lunch_period for _, p in occupied(entry)):
             errors.append(f"H7: {entry.course} crosses the lunch break")
         if room.room_type != req.room_type:
             errors.append(f"H5: {entry.course} needs {req.room_type}")

@@ -103,6 +103,13 @@ class SolverTests(unittest.TestCase):
         self.assertTrue(group_conflict(lecture, lab_one))
         self.assertFalse(group_conflict(lab_one, lab_two))
 
+    def test_lab_and_tutorial_batches_of_same_cohort_cannot_overlap(self):
+        lab = Entry("R2", "Lab One", "CSE-BTech-1stYear::LAB-1", "I2", "LAB1", "Mon", 1, 1)
+        tutorial = Entry("R3", "Tutorial One", "CSE-BTech-1stYear::TUTORIAL-1", "I3", "C1", "Mon", 1, 1)
+        from backend.app.solver.validator import group_conflict
+
+        self.assertTrue(group_conflict(lab, tutorial))
+
     def test_per_entity_exports(self):
         schedule = generate(self.requirements, self.rooms, self.instructors)
         class_csv = export_class_csv(schedule.entries, "CSE-S3-A")
@@ -190,6 +197,26 @@ class SolverTests(unittest.TestCase):
             elif e.day == "Wed":
                 self.assertIn("DTSTART:20260107T", ical)
 
+    def test_build_four_year_dataset_is_feasible(self):
+        from tools.build_four_year_dataset import build_dataset
+        from backend.app import xlsx_io, main
+        groups, rooms, faculty, allocations = build_dataset()
+        xlsx_io.SAMPLES.update({"Groups": groups, "Rooms": rooms, "Faculty": faculty, "Allocations": allocations, "Configuration": [["13:00"]]})
+        data = xlsx_io.parse_upload(xlsx_io.build_template())
+        reqs, rms, ppl = main.read_data(data)
+        sched = generate(reqs, rms, ppl, lunch_period=5)
+        self.assertEqual(sched.status, "FEASIBLE")
+
+    def test_build_full_week_dataset_is_feasible(self):
+        from tools.build_full_week_dataset import build_full_week_dataset
+        from backend.app import xlsx_io, main
+        groups, rooms, faculty, allocations, config = build_full_week_dataset()
+        xlsx_io.SAMPLES.update({"Groups": groups, "Rooms": rooms, "Faculty": faculty, "Allocations": allocations, "Configuration": config})
+        data = xlsx_io.parse_upload(xlsx_io.build_template())
+        reqs, rms, ppl = main.read_data(data)
+        sched = generate(reqs, rms, ppl, lunch_period=5)
+        self.assertEqual(sched.status, "FEASIBLE")
+        self.assertEqual(sum(e.length for e in sched.entries), 70)
 
 
 if __name__ == "__main__":

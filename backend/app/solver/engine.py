@@ -1,13 +1,13 @@
 """A transparent deterministic heuristic. Swap with OR-Tools in a future iteration."""
 from .models import Entry, Schedule
-from .validator import DAYS, PERIODS, BREAKS, validate, occupied, group_conflict, parent_group
+from .validator import DAYS, PERIODS, DEFAULT_LUNCH_PERIOD, validate, occupied, group_conflict, parent_group
 
 
-def _candidate_slots(req, teacher=None, existing_entries=None):
+def _candidate_slots(req, teacher=None, existing_entries=None, lunch_period=DEFAULT_LUNCH_PERIOD):
     if req.locked_slot:
         day, period = req.locked_slot.split("-")
         return [(day, int(period))]
-    slots = [(day, p) for day in DAYS for p in PERIODS if p + req.block_size - 1 <= 8 and not any(x in BREAKS for x in range(p, p + req.block_size))]
+    slots = [(day, p) for day in DAYS for p in PERIODS if p + req.block_size - 1 <= 8 and lunch_period not in range(p, p + req.block_size)]
     if not teacher and not existing_entries:
         return slots
 
@@ -46,7 +46,7 @@ def _candidate_slots(req, teacher=None, existing_entries=None):
     return sorted(slots, key=score_slot)
 
 
-def generate(requirements, rooms, instructors, locked=None):
+def generate(requirements, rooms, instructors, locked=None, lunch_period=DEFAULT_LUNCH_PERIOD):
     """Place most constrained requirements first; each meeting is a separate entry."""
     entries = list(locked or [])
     messages = []
@@ -79,7 +79,7 @@ def generate(requirements, rooms, instructors, locked=None):
         teacher = teacher_by_id.get(req.instructor)
         while remaining > 0:
             placed = False
-            for day, period in _candidate_slots(req, teacher=teacher, existing_entries=entries):
+            for day, period in _candidate_slots(req, teacher=teacher, existing_entries=entries, lunch_period=lunch_period):
                 for room in rooms:
                     if room.room_type != req.room_type or room.capacity < req.students or (req.accessible_room and not room.accessible):
                         continue
@@ -94,5 +94,5 @@ def generate(requirements, rooms, instructors, locked=None):
                 messages.append(f"Could not place {req.course} for {req.cohort}. Check rooms, availability or required hours.")
                 break
             remaining -= req.block_size
-    errors = validate(entries, requirements, rooms, instructors)
+    errors = validate(entries, requirements, rooms, instructors, lunch_period=lunch_period)
     return Schedule(entries, "FEASIBLE" if not errors else "INFEASIBLE", messages + errors)

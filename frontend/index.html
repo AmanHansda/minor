@@ -418,8 +418,8 @@
     }
     table.timetable-grid th, table.timetable-grid td {
       border: 1px solid #334155;
-      padding: 6px 8px;
-      vertical-align: top;
+      padding: 4px;
+      vertical-align: middle;
       text-align: center;
     }
     table.timetable-grid th {
@@ -435,7 +435,7 @@
       vertical-align: middle;
     }
     table.timetable-grid th.period-header {
-      min-width: 120px;
+      min-width: 96px;
     }
     table.timetable-grid th.lunch-header {
       width: 85px;
@@ -454,12 +454,12 @@
       padding: 10px 4px;
     }
     .slot-item {
-      background: #ffffff;
-      border: 1px solid var(--border-dark);
-      border-radius: 4px;
-      padding: 6px 8px;
-      margin-bottom: 4px;
-      text-align: left;
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      padding: 2px 3px;
+      margin-bottom: 2px;
+      text-align: center;
       cursor: pointer;
       transition: all 0.15s ease;
     }
@@ -476,13 +476,13 @@
     }
     .slot-title {
       font-weight: 700;
-      font-size: 12px;
+      font-size: 11px;
       color: var(--text);
       display: block;
       margin-bottom: 2px;
     }
     .slot-meta {
-      font-size: 11px;
+      font-size: 9px;
       color: var(--text-muted);
       display: flex;
       flex-direction: column;
@@ -610,20 +610,40 @@
 
     /* Print Styles */
     @media print {
-      body { background: white; font-size: 10pt; }
+      @page { size: A4 landscape; margin: 8mm; }
+      html, body { width: 100%; height: auto; }
+      body { background: white; font-size: 9pt; }
       .shell-header, .nav-tabs, .action-bar, .modal-overlay, #admin, #absenceChat {
         display: none !important;
       }
-      .container { padding: 0; max-width: none; }
-      .sheet-container { border: none; padding: 0; }
+      .container { padding: 0; max-width: none; width: 100%; }
+      .sheet-container { border: none; padding: 0; width: 100%; }
       .panel { display: none !important; }
       .panel.active { display: block !important; }
+      .grid-table-wrap { overflow: visible; margin-bottom: 8px; }
+      .sheet-header { padding-bottom: 5px; margin-bottom: 7px; border-bottom-width: 1px; }
+      .sheet-header h2 { font-size: 15pt; }
+      .sheet-header h4 { font-size: 8pt; letter-spacing: .5px; }
+      .sheet-header .sheet-meta { font-size: 7.5pt; margin-top: 2px; }
+      table.timetable-grid { font-size: 7pt; }
       table.timetable-grid th, table.timetable-grid td {
         border-color: #000 !important;
-        font-size: 8pt;
-        padding: 3px 4px;
+        font-size: 7pt;
+        padding: 2px;
       }
-      .slot-item { border: 1px solid #666 !important; background: transparent !important; }
+      table.timetable-grid th.day-col { width: 52px; font-size: 7.5pt; }
+      table.timetable-grid th.period-header { min-width: 0; }
+      table.timetable-grid th.lunch-header { width: 38px; }
+      table.timetable-grid td.lunch-cell { font-size: 6.5pt; padding: 2px; }
+      .slot-item { border: 0 !important; background: transparent !important; padding: 1px; margin-bottom: 1px; }
+      .slot-title { font-size: 7.5pt; margin: 0; }
+      .slot-meta { font-size: 6.5pt; line-height: 1.15; }
+      .slot-badge { font-size: 6pt; margin-top: 1px; }
+      .directory-print { margin-top: 8px !important; }
+      .directory-print h4 { margin-bottom: 4px !important; font-size: 9pt !important; }
+      .directory-print .data-table { font-size: 7pt; }
+      .directory-print .data-table th, .directory-print .data-table td { padding: 2px 4px; font-size: 7pt; border-color: #000; }
+      .approval-row { margin-top: 12px !important; padding-top: 5px !important; font-size: 7pt !important; }
     }
   </style>
 </head>
@@ -688,6 +708,20 @@
       </div>
 
       <div id="statusNotice" class="form-notice"></div>
+
+      <div class="card">
+        <div class="card-header"><div><h3 class="card-title">Input Method &amp; Schedule Configuration</h3><p class="card-desc">Use manual entry or import the official Excel workbook. Both use the same validation and scheduling process.</p></div></div>
+        <div class="form-grid">
+          <div class="form-field"><label>Input Method</label><select id="inputMethod" onchange="toggleImportArea()"><option value="manual">Manual Entry</option><option value="excel">Excel Upload</option></select></div>
+          <div class="form-field"><label>Lunch Start Time</label><input id="lunchTime" type="time" value="13:00" min="09:00" max="16:00" step="3600"></div>
+        </div>
+        <div id="excelImportArea" style="display:none; margin-top:14px; border:1px dashed var(--border); border-radius:8px; padding:16px; background:var(--bg);">
+          <div class="btn-group"><button class="secondary" onclick="window.location.href='/api/template.xlsx'">Download Excel Template</button><input id="excelFile" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onchange="uploadExcel()"></div>
+          <p id="uploadStatus" style="font-size:12px;color:var(--text-muted);margin:10px 0 0;">Download the template, fill each sheet, then select the completed .xlsx file.</p>
+          <div id="importPreview" class="table-wrap" style="display:none;margin-top:12px;"></div>
+          <button id="confirmImportBtn" class="primary" style="display:none;margin-top:12px;" onclick="confirmExcelImport()">Confirm and Apply Imported Data</button>
+        </div>
+      </div>
 
       <!-- Quality Metrics Grid -->
       <div id="metricsRow" class="metrics-grid"></div>
@@ -1029,7 +1063,8 @@
       rooms: [],
       instructors: [],
       requirements: [],
-      class_groups: []
+      class_groups: [],
+      config: { lunch_time: '13:00' }
     };
     let schedule = [];
     let activeEditing = { kind: null, index: -1 };
@@ -1097,6 +1132,16 @@
       return match ? `${match.name} (${match.id})` : id;
     }
 
+    function courseDetails(course) {
+      const match = String(course || '').match(/^([^\s]+)\s+(.+)$/);
+      return match ? { code: match[1], name: match[2] } : { code: course || '—', name: '' };
+    }
+
+    function batchLabel(cohort) {
+      const match = String(cohort || '').match(/::([A-Z]+)-(\d+)$/);
+      return match ? `${match[1]}-${match[2]}` : '';
+    }
+
     // Auto-adjust block size when teaching type changes
     function onTeachingTypeChange() {
       const type = $('allocationType').value;
@@ -1105,6 +1150,36 @@
       } else {
         $('courseBlock').value = 1;
       }
+    }
+
+    function lunchDisplay() {
+      const start = $('lunchTime').value || '13:00';
+      return `${start} – ${String(parseInt(start.slice(0, 2), 10) + 1).padStart(2, '0')}:00`;
+    }
+
+    let pendingImport = null;
+    function toggleImportArea() { $('excelImportArea').style.display = $('inputMethod').value === 'excel' ? 'block' : 'none'; }
+    function uploadExcel() {
+      const file = $('excelFile').files[0];
+      if (!file) return;
+      if (!file.name.toLowerCase().endsWith('.xlsx')) return showNotice('Please choose an .xlsx workbook.', true);
+      const form = new FormData(); form.append('file', file);
+      $('uploadStatus').textContent = `Validating ${file.name}...`;
+      fetch('/api/import.xlsx', { method: 'POST', body: form }).then(async res => {
+        const result = await res.json(); if (!res.ok) throw new Error(result.error || 'Upload failed'); return result;
+      }).then(result => {
+        pendingImport = result.data; const d = pendingImport;
+        $('uploadStatus').textContent = `${file.name} validated. Review the imported records below.`;
+        $('importPreview').style.display = 'block';
+        $('importPreview').innerHTML = `<table class="data-table"><thead><tr><th>Academic Groups</th><th>Rooms</th><th>Faculty</th><th>Allocations</th><th>Lunch Time</th></tr></thead><tbody><tr><td>${d.class_groups.length}</td><td>${d.rooms.length}</td><td>${d.instructors.length}</td><td>${d.requirements.length}</td><td>${esc(d.config.lunch_time)}</td></tr></tbody></table>`;
+        $('confirmImportBtn').style.display = 'inline-flex';
+      }).catch(err => { pendingImport = null; $('confirmImportBtn').style.display = 'none'; $('importPreview').style.display = 'none'; $('uploadStatus').textContent = `Validation error: ${err.message}`; showNotice(`Excel upload failed: ${err.message}`, true); });
+    }
+    function confirmExcelImport() {
+      if (!pendingImport) return showNotice('Upload a valid workbook first.', true);
+      data = pendingImport; $('lunchTime').value = data.config.lunch_time; pendingImport = null;
+      renderInputs(); $('inputMethod').value = 'manual'; toggleImportArea();
+      showNotice('Excel data applied. You can now edit any record or generate the timetable.');
     }
 
     // Notifications
@@ -1258,8 +1333,10 @@
           rooms: d.rooms || [],
           instructors: d.instructors || [],
           requirements: d.requirements || [],
-          class_groups: d.class_groups || []
+          class_groups: d.class_groups || [],
+          config: d.config || { lunch_time: '13:00' }
         };
+        $('lunchTime').value = data.config.lunch_time || '13:00';
         schedule = [];
         activeEditing = { kind: null, index: -1 };
         ['group', 'room', 'teacher', 'allocation'].forEach(k => cancelEdit(k));
@@ -1280,6 +1357,7 @@
     // Save Data to Backend Storage
     async function saveData() {
       try {
+        data.config = { lunch_time: $('lunchTime').value || '13:00' };
         const res = await api('/api/data', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1374,20 +1452,16 @@
     // Universal Weekly Grid Generator
     function buildWeeklyGrid(filteredEntries, isCohortView = false) {
       const periods = [1, 2, 3, 4, 5, 6, 7, 8];
+      const lunchPeriod = (parseInt(($('lunchTime').value || '13:00').slice(0, 2), 10) - 9) + 1;
+      const lunchStart = $('lunchTime').value || '13:00';
+      const lunchEnd = `${String(parseInt(lunchStart.slice(0, 2), 10) + 1).padStart(2, '0')}:00`;
       
       return `
         <table class="timetable-grid">
           <thead>
             <tr>
               <th class="day-col">Day</th>
-              <th class="period-header">Period 1<br><small>9:00 - 10:00</small></th>
-              <th class="period-header">Period 2<br><small>10:00 - 11:00</small></th>
-              <th class="period-header">Period 3<br><small>11:00 - 12:00</small></th>
-              <th class="period-header">Period 4<br><small>12:00 - 1:00</small></th>
-              <th class="lunch-header">Lunch Break<br><small>1:00 - 2:00</small></th>
-              <th class="period-header">Period 6<br><small>2:00 - 3:00</small></th>
-              <th class="period-header">Period 7<br><small>3:00 - 4:00</small></th>
-              <th class="period-header">Period 8<br><small>4:00 - 5:00</small></th>
+              ${periods.map(p => p === lunchPeriod ? `<th class="lunch-header">Lunch Break<br><small>${lunchStart} - ${lunchEnd}</small></th>` : `<th class="period-header">Period ${p}<br><small>${esc(PERIOD_LABELS[p])}</small></th>`).join('')}
             </tr>
           </thead>
           <tbody>
@@ -1395,8 +1469,8 @@
               <tr>
                 <th class="day-col">${day}</th>
                 ${periods.map(p => {
-                  if (p === 5) {
-                    return `<td class="lunch-cell">LUNCH BREAK (1:00 - 2:00 PM)</td>`;
+                  if (p === lunchPeriod) {
+                    return `<td class="lunch-cell">LUNCH BREAK (${lunchStart} - ${lunchEnd})</td>`;
                   }
                   const matching = filteredEntries.filter(e => e.day === day && p >= e.period && p < e.period + e.length);
                   if (!matching.length) {
@@ -1409,17 +1483,16 @@
                       if (p > e.period) {
                         return `
                           <div class="slot-item ${isLab?'lab':''}" style="opacity:0.75; font-style:italic;" onclick="inspectSlot(${globalIdx})">
-                            <span class="slot-title" style="font-size:11px;">↳ ${esc(e.course)}</span>
+                            <span class="slot-title" style="font-size:11px;">↳ ${esc(courseDetails(e.course).code)}</span>
                             <div class="slot-meta"><span>(cont. in ${esc(e.room)})</span></div>
                           </div>
                         `;
                       }
                       return `
                         <div class="slot-item ${isLab?'lab':''}" onclick="inspectSlot(${globalIdx})">
-                          <span class="slot-title">${esc(e.course)}</span>
+                          <span class="slot-title">${esc(courseDetails(e.course).code)}${batchLabel(e.cohort) ? ` (${esc(batchLabel(e.cohort))})` : ''}</span>
                           <div class="slot-meta">
-                            <span>Room: <b>${esc(e.room)}</b></span>
-                            <span>Faculty: <b>${esc(getTeacherName(e.instructor))}</b></span>
+                            <span>${esc(e.room)} · ${esc(getTeacherName(e.instructor))}</span>
                             ${!isCohortView ? `<span>Group: <code>${esc(e.cohort)}</code></span>` : ''}
                           </div>
                           ${e.length > 1 ? `<span class="slot-badge lab-badge">${e.length}h Block (P${e.period}–P${e.period+e.length-1})</span>` : ''}
@@ -1449,24 +1522,28 @@
       });
       const gridHtml = buildWeeklyGrid(entries, true);
 
+      const group = data.class_groups.find(g => formatGroupId(g) === selectedCohort) || {};
+      const programme = group.program || 'Programme';
+      const academicYear = group.year || '';
+
       // Subject directory
       const uniqueCourses = [...new Map(entries.map(e => [e.course, e])).values()];
       const directoryHtml = `
-        <div style="margin-top: 24px;">
-          <h4 style="margin: 0 0 10px; font-size: 14px; font-weight: 700; text-transform: uppercase;">Course &amp; Faculty Directory</h4>
+        <div class="directory-print" style="margin-top: 18px;">
+          <h4 style="margin: 0 0 8px; font-size: 13px; font-weight: 700; text-transform: uppercase;">Subject &amp; Faculty Directory</h4>
           <table class="data-table">
             <thead>
               <tr>
-                <th style="width:50px">Sr No</th><th>Course Name</th><th>Allocated Faculty</th><th>Designated Room</th><th>Weekly Hours</th>
+                <th style="width:50px">Sr No</th><th>Subject Code</th><th>Subject Name</th><th>Faculty Name</th><th>Weekly Hours</th>
               </tr>
             </thead>
             <tbody>
               ${uniqueCourses.map((e, idx) => `
                 <tr>
                   <td class="num">${idx + 1}</td>
-                  <td><b>${esc(e.course)}</b></td>
+                  <td><b>${esc(courseDetails(e.course).code)}</b></td>
+                  <td>${esc(courseDetails(e.course).name)}</td>
                   <td>${esc(getTeacherName(e.instructor))}</td>
-                  <td>${esc(getRoomName(e.room))}</td>
                   <td class="num">${entries.filter(x => x.course === e.course).reduce((acc, x) => acc + x.length, 0)} hrs</td>
                 </tr>
               `).join('')}
@@ -1477,13 +1554,13 @@
 
       $('studentSheetContainer').innerHTML = `
         <div class="sheet-header">
-          <h4>CHRONOS UNIVERSITY — SCHOOL OF ENGINEERING &amp; TECHNOLOGY</h4>
-          <h2>ACADEMIC CLASS TIMETABLE — ${esc(selectedCohort)}</h2>
-          <div class="sheet-meta">Weekly Schedule · Mon to Fri (9:00 AM – 5:00 PM) · Lunch Break: 1:00 PM – 2:00 PM · Official Version</div>
+          <h4>CHRONOS UNIVERSITY · SCHOOL OF ENGINEERING &amp; TECHNOLOGY</h4>
+          <h2>${esc(programme)} Time Table: ${esc(academicYear)} — ${esc(selectedCohort)}</h2>
+          <div class="sheet-meta">Department of Computer Science &amp; Engineering · Mon to Fri (9:00 AM – 5:00 PM) · Lunch: ${esc(lunchDisplay())}</div>
         </div>
         <div class="grid-table-wrap">${gridHtml}</div>
         ${directoryHtml}
-        <div style="display:flex; justify-content:space-between; margin-top:36px; padding-top:14px; border-top:1px solid #ccc; font-size:12px; color:#555;">
+        <div class="approval-row" style="display:flex; justify-content:space-between; margin-top:24px; padding-top:10px; border-top:1px solid #ccc; font-size:12px; color:#555;">
           <span>Prepared by: Timetable Committee</span>
           <span>Verified by: Department Head</span>
           <span>Approved by: Dean Academics</span>

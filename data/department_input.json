@@ -1,12 +1,12 @@
 {
   "requirements": [
     {
-      "id": "R1",
-      "course": "Data Structures",
+      "id": "CSE-S3-A-CS301-CLASS",
+      "course": "CS301 Data Structures",
       "cohort": "CSE-S3-A",
-      "instructor": "I1",
+      "instructor": "T1",
       "students": 60,
-      "hours": 3,
+      "hours": 5,
       "block_size": 1,
       "room_type": "LECTURE",
       "accessible_room": false,
@@ -14,38 +14,12 @@
       "allocation_type": "CLASS"
     },
     {
-      "id": "R2",
-      "course": "Data Structures Lab [LAB Group 1]",
-      "cohort": "CSE-S3-A::LAB-1",
-      "instructor": "I4",
-      "students": 30,
-      "hours": 2,
-      "block_size": 2,
-      "room_type": "LAB",
-      "accessible_room": false,
-      "locked_slot": null,
-      "allocation_type": "LAB"
-    },
-    {
-      "id": "R3",
-      "course": "Data Structures Lab [LAB Group 2]",
-      "cohort": "CSE-S3-A::LAB-2",
-      "instructor": "I4",
-      "students": 30,
-      "hours": 2,
-      "block_size": 2,
-      "room_type": "LAB",
-      "accessible_room": false,
-      "locked_slot": null,
-      "allocation_type": "LAB"
-    },
-    {
-      "id": "R4",
-      "course": "Discrete Mathematics",
+      "id": "CSE-S3-A-CS302-CLASS",
+      "course": "CS302 Computer Organization",
       "cohort": "CSE-S3-A",
-      "instructor": "I2",
+      "instructor": "T2",
       "students": 60,
-      "hours": 3,
+      "hours": 4,
       "block_size": 1,
       "room_type": "LECTURE",
       "accessible_room": false,
@@ -53,51 +27,142 @@
       "allocation_type": "CLASS"
     },
     {
-      "id": "R5",
-      "course": "Database Systems",
+      "id": "CSE-S3-A-CS303-CLASS",
+      "course": "CS303 Database Systems",
       "cohort": "CSE-S3-A",
-      "instructor": "I3",
+      "instructor": "T3",
       "students": 60,
-      "hours": 3,
+      "hours": 5,
       "block_size": 1,
-      "room_type": "CLASSROOM",
+      "room_type": "LECTURE",
       "accessible_room": false,
       "locked_slot": null,
       "allocation_type": "CLASS"
     },
     {
-      "id": "R6",
-      "course": "Database Lab [LAB Group 1]",
-      "cohort": "CSE-S3-A::LAB-1",
-      "instructor": "I3",
-      "students": 30,
-      "hours": 2,
-      "block_size": 2,
-      "room_type": "LAB",
+      "id": "CSE-S3-A-CS304-CLASS",
+      "course": "CS304 Operating Systems",
+      "cohort": "CSE-S3-A",
+      "instructor": "T4",
+      "students": 60,
+      "hours": 4,
+      "block_size": 1,
+      "room_type": "LECTURE",
       "accessible_room": false,
       "locked_slot": null,
-      "allocation_type": "LAB"
+      "allocation_type": "CLASS"
     },
     {
-      "id": "R7",
-      "course": "Database Lab [LAB Group 2]",
-      "cohort": "CSE-S3-A::LAB-2",
-      "instructor": "I3",
-      "students": 30,
-      "hours": 2,
-      "block_size": 2,
-      "room_type": "LAB",
+      "id": "CSE-S3-A-CS305-CLASS",
+      "course": "CS305 Discrete Mathematics",
+      "cohort": "CSE-S3-A",
+      "instructor": "T5",
+      "students": 60,
+      "hours": 5,
+      "block_size": 1,
+      "room_type": "LECTURE",
       "accessible_room": false,
       "locked_slot": null,
-      "allocation_type": "LAB"
+      "allocation_type": "CLASS"
     },
     {
-      "id": "R8",
-      "course": "Data Structures",
+      "id": "CSE-S3-A-CS306-CLASS",
+      "course": "CS306 Software Engineering",
+      "cohort": "CSE-S3-A",
+      "instructor": "T6",
+      "students": 60,
+      "hours": 2,
+      "block_size": 1,
+      "room_type": "LECTURE",
+      "accessible_room": false,
+      "locked_slot": null,
+      "allocation_type": "CLASS"
+    },
+    {
+      "id": "CSE-S3-A-CS307-CLASS",
+      "course": "CS307 Theory of Computation",
+      "cohort": "CSE-S3-A",
+      "instructor": "T7",
+      "students": 60,
+      "hours": 1,
+      "block_size": 1,
+      "room_type": "LECTURE",
+      "accessible_room": false,
+      "locked_slot": null,
+      "allocation_type": "CLASS"
+    },
+    {
+      "id": "CSE-S3-A-CS308-CLASS",
+      "course": "CS308 Data Structures Lab",
+      "cohort": "CSE-S3-A",
+      "instructor": "T1",
+      "students": 60,
+      "hours": 2,
+      "block_size": 2,
+      "room_type": "LECTURE",
+      "accessible_room": false,
+      "locked_slot": null,
+      "allocation_type": "CLASS"
+    },
+    {
+      "id": "CSE-S3-A-CS309-CLASS",
+      "course": "CS309 Database Systems Lab",
+      "cohort": "CSE-S3-A",
+      "instructor": "T3",
+      "students": 60,
+      "hours": 2,
+      "block_size": 2,
+      "room_type": "LECTURE",
+      "accessible_room": false,
+      "locked_slot": null,
+      "allocation_type": "CLASS"
+    },
+    {
+      "id": "CSE-S3-A-CS310-CLASS",
+      "course": "CS310 Linux Kernel Lab",
+      "cohort": "CSE-S3-A",
+      "instructor": "T4",
+      "students": 60,
+      "hours": 2,
+      "block_size": 2,
+      "room_type": "LECTURE",
+      "accessible_room": false,
+      "locked_slot": null,
+      "allocation_type": "CLASS"
+    },
+    {
+      "id": "CSE-S3-A-HS301-CLASS",
+      "course": "HS301 Technical Communication",
+      "cohort": "CSE-S3-A",
+      "instructor": "T6",
+      "students": 60,
+      "hours": 2,
+      "block_size": 1,
+      "room_type": "LECTURE",
+      "accessible_room": false,
+      "locked_slot": null,
+      "allocation_type": "CLASS"
+    },
+    {
+      "id": "CSE-S3-A-CS311-CLASS",
+      "course": "CS311 Academic Seminar",
+      "cohort": "CSE-S3-A",
+      "instructor": "T7",
+      "students": 60,
+      "hours": 1,
+      "block_size": 1,
+      "room_type": "LECTURE",
+      "accessible_room": false,
+      "locked_slot": null,
+      "allocation_type": "CLASS"
+    },
+    {
+      "id": "CSE-S3-B-CS301-CLASS",
+      "course": "CS301 Data Structures",
       "cohort": "CSE-S3-B",
-      "instructor": "I2",
-      "students": 55,
-      "hours": 3,
+      "instructor": "T8",
+      "students": 60,
+      "hours": 5,
       "block_size": 1,
       "room_type": "LECTURE",
       "accessible_room": false,
@@ -105,146 +170,366 @@
       "allocation_type": "CLASS"
     },
     {
-      "id": "R9",
-      "course": "Database Systems",
+      "id": "CSE-S3-B-CS302-CLASS",
+      "course": "CS302 Computer Organization",
       "cohort": "CSE-S3-B",
-      "instructor": "I1",
-      "students": 55,
-      "hours": 3,
+      "instructor": "T9",
+      "students": 60,
+      "hours": 4,
       "block_size": 1,
-      "room_type": "CLASSROOM",
+      "room_type": "LECTURE",
       "accessible_room": false,
       "locked_slot": null,
       "allocation_type": "CLASS"
     },
     {
-      "id": "R10",
-      "course": "Data Structures Lab [LAB Group 1]",
-      "cohort": "CSE-S3-B::LAB-1",
-      "instructor": "I4",
-      "students": 28,
-      "hours": 2,
-      "block_size": 2,
-      "room_type": "LAB",
+      "id": "CSE-S3-B-CS303-CLASS",
+      "course": "CS303 Database Systems",
+      "cohort": "CSE-S3-B",
+      "instructor": "T10",
+      "students": 60,
+      "hours": 5,
+      "block_size": 1,
+      "room_type": "LECTURE",
       "accessible_room": false,
       "locked_slot": null,
-      "allocation_type": "LAB"
+      "allocation_type": "CLASS"
     },
     {
-      "id": "R11",
-      "course": "Data Structures Lab [LAB Group 2]",
-      "cohort": "CSE-S3-B::LAB-2",
-      "instructor": "I4",
-      "students": 27,
-      "hours": 2,
-      "block_size": 2,
-      "room_type": "LAB",
+      "id": "CSE-S3-B-CS304-CLASS",
+      "course": "CS304 Operating Systems",
+      "cohort": "CSE-S3-B",
+      "instructor": "T11",
+      "students": 60,
+      "hours": 4,
+      "block_size": 1,
+      "room_type": "LECTURE",
       "accessible_room": false,
       "locked_slot": null,
-      "allocation_type": "LAB"
+      "allocation_type": "CLASS"
+    },
+    {
+      "id": "CSE-S3-B-CS305-CLASS",
+      "course": "CS305 Discrete Mathematics",
+      "cohort": "CSE-S3-B",
+      "instructor": "T12",
+      "students": 60,
+      "hours": 5,
+      "block_size": 1,
+      "room_type": "LECTURE",
+      "accessible_room": false,
+      "locked_slot": null,
+      "allocation_type": "CLASS"
+    },
+    {
+      "id": "CSE-S3-B-CS306-CLASS",
+      "course": "CS306 Software Engineering",
+      "cohort": "CSE-S3-B",
+      "instructor": "T13",
+      "students": 60,
+      "hours": 2,
+      "block_size": 1,
+      "room_type": "LECTURE",
+      "accessible_room": false,
+      "locked_slot": null,
+      "allocation_type": "CLASS"
+    },
+    {
+      "id": "CSE-S3-B-CS307-CLASS",
+      "course": "CS307 Theory of Computation",
+      "cohort": "CSE-S3-B",
+      "instructor": "T14",
+      "students": 60,
+      "hours": 1,
+      "block_size": 1,
+      "room_type": "LECTURE",
+      "accessible_room": false,
+      "locked_slot": null,
+      "allocation_type": "CLASS"
+    },
+    {
+      "id": "CSE-S3-B-CS308-CLASS",
+      "course": "CS308 Data Structures Lab",
+      "cohort": "CSE-S3-B",
+      "instructor": "T8",
+      "students": 60,
+      "hours": 2,
+      "block_size": 2,
+      "room_type": "LECTURE",
+      "accessible_room": false,
+      "locked_slot": null,
+      "allocation_type": "CLASS"
+    },
+    {
+      "id": "CSE-S3-B-CS309-CLASS",
+      "course": "CS309 Database Systems Lab",
+      "cohort": "CSE-S3-B",
+      "instructor": "T10",
+      "students": 60,
+      "hours": 2,
+      "block_size": 2,
+      "room_type": "LECTURE",
+      "accessible_room": false,
+      "locked_slot": null,
+      "allocation_type": "CLASS"
+    },
+    {
+      "id": "CSE-S3-B-CS310-CLASS",
+      "course": "CS310 Linux Kernel Lab",
+      "cohort": "CSE-S3-B",
+      "instructor": "T11",
+      "students": 60,
+      "hours": 2,
+      "block_size": 2,
+      "room_type": "LECTURE",
+      "accessible_room": false,
+      "locked_slot": null,
+      "allocation_type": "CLASS"
+    },
+    {
+      "id": "CSE-S3-B-HS301-CLASS",
+      "course": "HS301 Technical Communication",
+      "cohort": "CSE-S3-B",
+      "instructor": "T13",
+      "students": 60,
+      "hours": 2,
+      "block_size": 1,
+      "room_type": "LECTURE",
+      "accessible_room": false,
+      "locked_slot": null,
+      "allocation_type": "CLASS"
+    },
+    {
+      "id": "CSE-S3-B-CS311-CLASS",
+      "course": "CS311 Academic Seminar",
+      "cohort": "CSE-S3-B",
+      "instructor": "T14",
+      "students": 60,
+      "hours": 1,
+      "block_size": 1,
+      "room_type": "LECTURE",
+      "accessible_room": false,
+      "locked_slot": null,
+      "allocation_type": "CLASS"
     }
   ],
   "rooms": [
     {
       "id": "LH1",
-      "name": "A Block Lecture Hall",
+      "name": "Lecture Hall 1",
       "room_type": "LECTURE",
-      "capacity": 120,
-      "building": "A",
+      "capacity": 80,
+      "building": "Academic Block",
+      "accessible": true,
+      "department": "CSE"
+    },
+    {
+      "id": "LH2",
+      "name": "Lecture Hall 2",
+      "room_type": "LECTURE",
+      "capacity": 80,
+      "building": "Academic Block",
       "accessible": true,
       "department": "CSE"
     },
     {
       "id": "CR1",
-      "name": "A Block Classroom",
+      "name": "Tutorial Room 1",
       "room_type": "CLASSROOM",
-      "capacity": 65,
-      "building": "A",
+      "capacity": 60,
+      "building": "Academic Block",
+      "accessible": true,
+      "department": "CSE"
+    },
+    {
+      "id": "CR2",
+      "name": "Tutorial Room 2",
+      "room_type": "CLASSROOM",
+      "capacity": 60,
+      "building": "Academic Block",
       "accessible": true,
       "department": "CSE"
     },
     {
       "id": "LAB1",
-      "name": "Computer Lab 1",
+      "name": "Computing Lab 1",
       "room_type": "LAB",
-      "capacity": 32,
-      "building": "A",
+      "capacity": 60,
+      "building": "Lab Block",
       "accessible": true,
       "department": "CSE"
     },
     {
       "id": "LAB2",
-      "name": "Computer Lab 2",
+      "name": "Computing Lab 2",
       "room_type": "LAB",
-      "capacity": 32,
-      "building": "A",
+      "capacity": 60,
+      "building": "Lab Block",
       "accessible": true,
       "department": "CSE"
-    },
-    {
-      "id": "PHY1",
-      "name": "Physics Lab",
-      "room_type": "LAB",
-      "capacity": 32,
-      "building": "C",
-      "accessible": true,
-      "department": "Physics"
     }
   ],
   "instructors": [
     {
-      "id": "I1",
-      "name": "Dr. Sharma",
-      "max_hours_week": 18,
+      "id": "T1",
+      "name": "Dr. Alan Turing",
+      "max_hours_week": 24,
       "unavailable": [],
       "preferred": [
         "Mon-1",
-        "Tue-1"
+        "Wed-1"
       ]
     },
     {
-      "id": "I2",
-      "name": "Prof. Verma",
-      "max_hours_week": 18,
+      "id": "T2",
+      "name": "Dr. Grace Hopper",
+      "max_hours_week": 24,
       "unavailable": [],
-      "preferred": []
-    },
-    {
-      "id": "I3",
-      "name": "Ms. Khan",
-      "max_hours_week": 18,
-      "unavailable": [
-        "Mon-1",
+      "preferred": [
         "Mon-2",
-        "Wed-1",
-        "Wed-2"
-      ],
-      "preferred": []
+        "Thu-2"
+      ]
     },
     {
-      "id": "I4",
-      "name": "Lab Instructor",
-      "max_hours_week": 18,
+      "id": "T3",
+      "name": "Dr. Donald Knuth",
+      "max_hours_week": 24,
       "unavailable": [],
-      "preferred": []
+      "preferred": [
+        "Tue-1",
+        "Wed-2"
+      ]
+    },
+    {
+      "id": "T4",
+      "name": "Dr. Ada Lovelace",
+      "max_hours_week": 24,
+      "unavailable": [],
+      "preferred": [
+        "Tue-2",
+        "Thu-1"
+      ]
+    },
+    {
+      "id": "T5",
+      "name": "Dr. John von Neumann",
+      "max_hours_week": 24,
+      "unavailable": [],
+      "preferred": [
+        "Mon-3",
+        "Fri-1"
+      ]
+    },
+    {
+      "id": "T6",
+      "name": "Dr. Claude Shannon",
+      "max_hours_week": 24,
+      "unavailable": [],
+      "preferred": [
+        "Wed-3",
+        "Fri-2"
+      ]
+    },
+    {
+      "id": "T7",
+      "name": "Dr. Barbara Liskov",
+      "max_hours_week": 24,
+      "unavailable": [],
+      "preferred": [
+        "Tue-4",
+        "Thu-3"
+      ]
+    },
+    {
+      "id": "T8",
+      "name": "Dr. Linus Torvalds",
+      "max_hours_week": 24,
+      "unavailable": [],
+      "preferred": [
+        "Mon-1",
+        "Wed-1"
+      ]
+    },
+    {
+      "id": "T9",
+      "name": "Dr. Margaret Hamilton",
+      "max_hours_week": 24,
+      "unavailable": [],
+      "preferred": [
+        "Mon-2",
+        "Thu-2"
+      ]
+    },
+    {
+      "id": "T10",
+      "name": "Dr. Ken Thompson",
+      "max_hours_week": 24,
+      "unavailable": [],
+      "preferred": [
+        "Tue-1",
+        "Wed-2"
+      ]
+    },
+    {
+      "id": "T11",
+      "name": "Dr. Leslie Lamport",
+      "max_hours_week": 24,
+      "unavailable": [],
+      "preferred": [
+        "Tue-2",
+        "Thu-1"
+      ]
+    },
+    {
+      "id": "T12",
+      "name": "Dr. Edsger Dijkstra",
+      "max_hours_week": 24,
+      "unavailable": [],
+      "preferred": [
+        "Mon-3",
+        "Fri-1"
+      ]
+    },
+    {
+      "id": "T13",
+      "name": "Dr. Tim Berners-Lee",
+      "max_hours_week": 24,
+      "unavailable": [],
+      "preferred": [
+        "Wed-3",
+        "Fri-2"
+      ]
+    },
+    {
+      "id": "T14",
+      "name": "Dr. Vint Cerf",
+      "max_hours_week": 24,
+      "unavailable": [],
+      "preferred": [
+        "Tue-4",
+        "Thu-3"
+      ]
     }
   ],
   "class_groups": [
     {
       "code": "CSE-S3-A",
+      "department": "CSE",
       "program": "B.Tech",
-      "year": "3rd Year",
+      "year": "2nd Year",
       "section": "A",
-      "students": 60,
-      "department": "CSE"
+      "students": 60
     },
     {
       "code": "CSE-S3-B",
+      "department": "CSE",
       "program": "B.Tech",
-      "year": "3rd Year",
+      "year": "2nd Year",
       "section": "B",
-      "students": 55,
-      "department": "CSE"
+      "students": 60
     }
-  ]
+  ],
+  "config": {
+    "lunch_time": "13:00"
+  }
 }

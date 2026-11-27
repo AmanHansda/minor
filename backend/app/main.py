@@ -19,17 +19,19 @@ from .services import (
 from .chatbot import answer
 from .solver.models import Room, Instructor, Requirement
 from .storage import save_input, load_input
+from .xlsx_io import build_template, parse_upload
 
 ROOT = Path(__file__).resolve().parents[2]
-STATE = {"schedule": None, "data": None, "class_groups": []}
+STATE = {"schedule": None, "data": None, "class_groups": [], "config": {"lunch_time": "13:00"}}
 INPUT_FILE = ROOT / "data" / "department_input.json"
 def current_data():
     if STATE["data"]:
         return STATE["data"]
     saved = load_input(INPUT_FILE)
     if saved:
-        requirements, rooms, people, groups = saved
+        requirements, rooms, people, groups, config = saved
         STATE["class_groups"] = groups
+        STATE["config"] = config
         return requirements, rooms, people
     reqs, rooms, people = load_demo()
     STATE["class_groups"] = load_demo_groups()
@@ -122,6 +124,11 @@ def read_data(body):
     return requirements, rooms, people
 
 
+def lunch_period():
+    value = STATE["config"].get("lunch_time", "13:00")
+    return (int(value[:2]) - 9) + 1
+
+
 class Handler(SimpleHTTPRequestHandler):
     def _send_json(self, value, status=200):
         raw = json.dumps(value, default=lambda x: x.__dict__).encode()
@@ -153,31 +160,38 @@ class Handler(SimpleHTTPRequestHandler):
                 demo_reqs, demo_rooms, demo_people = load_demo()
                 demo_groups = load_demo_groups()
                 STATE["class_groups"] = demo_groups
-                save_input(INPUT_FILE, demo_reqs, demo_rooms, demo_people, demo_groups)
+                STATE["config"] = {"lunch_time": "13:00"}
+                save_input(INPUT_FILE, demo_reqs, demo_rooms, demo_people, demo_groups, STATE["config"])
                 return self._send_json(
-                    {"requirements": demo_reqs, "rooms": demo_rooms, "instructors": demo_people, "class_groups": demo_groups}
+                    {"requirements": demo_reqs, "rooms": demo_rooms, "instructors": demo_people, "class_groups": demo_groups, "config": STATE["config"]}
                 )
             reqs, rooms, people = current_data()
             groups = STATE["class_groups"] or load_demo_groups()
             return self._send_json(
-                {"requirements": reqs, "rooms": rooms, "instructors": people, "class_groups": groups}
+                {"requirements": reqs, "rooms": rooms, "instructors": people, "class_groups": groups, "config": STATE["config"]}
             )
 
         if path == "/api/data":
             reqs, rooms, people = current_data()
             groups = STATE["class_groups"] or load_demo_groups()
             return self._send_json(
-                {"requirements": reqs, "rooms": rooms, "instructors": people, "class_groups": groups}
+                {"requirements": reqs, "rooms": rooms, "instructors": people, "class_groups": groups, "config": STATE["config"]}
             )
+
+        if path == "/api/template.xlsx":
+            raw = build_template()
+            self.send_response(200); self.send_header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+            self.send_header("Content-Disposition", 'attachment; filename="chronosai_input_template.xlsx"'); self.send_header("Content-Length", str(len(raw))); self.end_headers()
+            return self.wfile.write(raw)
 
         reqs, rooms, people = current_data()
 
         if path == "/api/generate":
-            STATE["schedule"] = generate(reqs, rooms, people)
+            STATE["schedule"] = generate(reqs, rooms, people, lunch_period=lunch_period())
             return self._send_json(
                 {
                     "schedule": STATE["schedule"],
-                    "quality": quality_report(STATE["schedule"].entries, reqs, rooms, people),
+                    "quality": quality_report(STATE["schedule"].entries, reqs, rooms, people, lunch_period=lunch_period()),
                 }
             )
         if path == "/api/export/csv":
@@ -242,21 +256,33 @@ class Handler(SimpleHTTPRequestHandler):
             if not STATE["schedule"]:
                 return self._send_json({"error": "Generate timetable first"}, 400)
             ident = path.rsplit("/", 1)[-1]
-            result, diff = absent_reschedule(STATE["schedule"], ident, reqs, rooms, people)
+            result, diff = absent_reschedule(STATE["schedule"], ident, reqs, rooms, people, lunch_period=lunch_period())
             return self._send_json({"schedule": result, "diff": diff})
-        if self.path == "/" or self.path == "/index.html":
+        if parsed_url.path in ("/", "/index.html"):
             self.path = "/frontend/index.html"
         return super().do_GET()
 
     def do_POST(self):
         length = int(self.headers.get("Content-Length", 0))
         try:
+            if self.path == "/api/import.xlsx":
+                raw = self.rfile.read(length)
+                marker = re.search(br'boundary=([^;]+)', self.headers.get('Content-Type', '').encode())
+                if not marker: raise ValueError('Upload could not be read.')
+                parts = raw.split(b'--' + marker.group(1))
+                content = next((p.split(b'\r\n\r\n', 1)[1].rsplit(b'\r\n', 1)[0] for p in parts if b'filename=' in p and b'\r\n\r\n' in p), None)
+                if content is None: raise ValueError('Choose an .xlsx file to upload.')
+                return self._send_json({"data": parse_upload(content), "message": "Workbook validated. Review the preview, then confirm import."})
             body = json.loads(self.rfile.read(length) or b"{}")
             if self.path == "/api/data":
                 STATE["data"] = read_data(body)
                 STATE["schedule"] = None
                 STATE["class_groups"] = list(body.get("class_groups", []))
-                save_input(INPUT_FILE, *STATE["data"], STATE["class_groups"])
+                config = body.get("config", {})
+                time = str(config.get("lunch_time", "13:00"))
+                if not re.match(r"^(09|10|11|12|13|14|15|16):00$", time): raise ValueError("Lunch time must be on the hour from 09:00 to 16:00.")
+                STATE["config"] = {"lunch_time": time}
+                save_input(INPUT_FILE, *STATE["data"], STATE["class_groups"], STATE["config"])
                 return self._send_json({"message": "Input data saved. Generate the timetable when ready."})
             if self.path == "/api/chat":
                 reqs, rooms, people = current_data()
@@ -265,6 +291,7 @@ class Handler(SimpleHTTPRequestHandler):
                     (STATE["schedule"].entries if STATE["schedule"] else []),
                     people,
                     rooms,
+                    STATE["config"].get("lunch_time", "13:00"),
                 )
                 return self._send_json({"reply": reply})
             return self._send_json({"error": "Not found"}, 404)
