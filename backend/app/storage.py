@@ -8,16 +8,28 @@ from pathlib import Path
 from .solver.models import Room, Instructor, Requirement
 
 
+def _local_path(path: Path) -> Path:
+    """Use a writable sidecar when a shared seed file is read-only."""
+    return path.with_name(f"{path.stem}.local{path.suffix}")
+
+
 def save_input(path: Path, requirements, rooms, instructors, class_groups=None, config=None):
     path.parent.mkdir(parents=True, exist_ok=True)
     payload = {"requirements": [x.__dict__ for x in requirements], "rooms": [x.__dict__ for x in rooms], "instructors": [x.__dict__ for x in instructors], "class_groups": class_groups or [], "config": config or {"lunch_time": "13:00"}}
-    path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    try:
+        path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        return path
+    except PermissionError:
+        fallback = _local_path(path)
+        fallback.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        return fallback
 
 
 def load_input(path: Path):
-    if not path.exists():
+    source = _local_path(path) if _local_path(path).exists() else path
+    if not source.exists():
         return None
-    body = json.loads(path.read_text(encoding="utf-8"))
+    body = json.loads(source.read_text(encoding="utf-8"))
     rooms = [Room(**x) for x in body["rooms"]]
     instructors = [Instructor(**x) for x in body["instructors"]]
     requirements = [Requirement(**x) for x in body["requirements"]]

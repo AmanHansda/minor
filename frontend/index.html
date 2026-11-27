@@ -418,8 +418,8 @@
     }
     table.timetable-grid th, table.timetable-grid td {
       border: 1px solid #334155;
-      padding: 6px 8px;
-      vertical-align: top;
+      padding: 4px;
+      vertical-align: middle;
       text-align: center;
     }
     table.timetable-grid th {
@@ -435,7 +435,7 @@
       vertical-align: middle;
     }
     table.timetable-grid th.period-header {
-      min-width: 120px;
+      min-width: 96px;
     }
     table.timetable-grid th.lunch-header {
       width: 85px;
@@ -454,12 +454,12 @@
       padding: 10px 4px;
     }
     .slot-item {
-      background: #ffffff;
-      border: 1px solid var(--border-dark);
-      border-radius: 4px;
-      padding: 6px 8px;
-      margin-bottom: 4px;
-      text-align: left;
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      padding: 2px 3px;
+      margin-bottom: 2px;
+      text-align: center;
       cursor: pointer;
       transition: all 0.15s ease;
     }
@@ -476,13 +476,13 @@
     }
     .slot-title {
       font-weight: 700;
-      font-size: 12px;
+      font-size: 11px;
       color: var(--text);
       display: block;
       margin-bottom: 2px;
     }
     .slot-meta {
-      font-size: 11px;
+      font-size: 9px;
       color: var(--text-muted);
       display: flex;
       flex-direction: column;
@@ -610,20 +610,40 @@
 
     /* Print Styles */
     @media print {
-      body { background: white; font-size: 10pt; }
+      @page { size: A4 landscape; margin: 8mm; }
+      html, body { width: 100%; height: auto; }
+      body { background: white; font-size: 9pt; }
       .shell-header, .nav-tabs, .action-bar, .modal-overlay, #admin, #absenceChat {
         display: none !important;
       }
-      .container { padding: 0; max-width: none; }
-      .sheet-container { border: none; padding: 0; }
+      .container { padding: 0; max-width: none; width: 100%; }
+      .sheet-container { border: none; padding: 0; width: 100%; }
       .panel { display: none !important; }
       .panel.active { display: block !important; }
+      .grid-table-wrap { overflow: visible; margin-bottom: 8px; }
+      .sheet-header { padding-bottom: 5px; margin-bottom: 7px; border-bottom-width: 1px; }
+      .sheet-header h2 { font-size: 15pt; }
+      .sheet-header h4 { font-size: 8pt; letter-spacing: .5px; }
+      .sheet-header .sheet-meta { font-size: 7.5pt; margin-top: 2px; }
+      table.timetable-grid { font-size: 7pt; }
       table.timetable-grid th, table.timetable-grid td {
         border-color: #000 !important;
-        font-size: 8pt;
-        padding: 3px 4px;
+        font-size: 7pt;
+        padding: 2px;
       }
-      .slot-item { border: 1px solid #666 !important; background: transparent !important; }
+      table.timetable-grid th.day-col { width: 52px; font-size: 7.5pt; }
+      table.timetable-grid th.period-header { min-width: 0; }
+      table.timetable-grid th.lunch-header { width: 38px; }
+      table.timetable-grid td.lunch-cell { font-size: 6.5pt; padding: 2px; }
+      .slot-item { border: 0 !important; background: transparent !important; padding: 1px; margin-bottom: 1px; }
+      .slot-title { font-size: 7.5pt; margin: 0; }
+      .slot-meta { font-size: 6.5pt; line-height: 1.15; }
+      .slot-badge { font-size: 6pt; margin-top: 1px; }
+      .directory-print { margin-top: 8px !important; }
+      .directory-print h4 { margin-bottom: 4px !important; font-size: 9pt !important; }
+      .directory-print .data-table { font-size: 7pt; }
+      .directory-print .data-table th, .directory-print .data-table td { padding: 2px 4px; font-size: 7pt; border-color: #000; }
+      .approval-row { margin-top: 12px !important; padding-top: 5px !important; font-size: 7pt !important; }
     }
   </style>
 </head>
@@ -1112,6 +1132,16 @@
       return match ? `${match.name} (${match.id})` : id;
     }
 
+    function courseDetails(course) {
+      const match = String(course || '').match(/^([^\s]+)\s+(.+)$/);
+      return match ? { code: match[1], name: match[2] } : { code: course || '—', name: '' };
+    }
+
+    function batchLabel(cohort) {
+      const match = String(cohort || '').match(/::([A-Z]+)-(\d+)$/);
+      return match ? `${match[1]}-${match[2]}` : '';
+    }
+
     // Auto-adjust block size when teaching type changes
     function onTeachingTypeChange() {
       const type = $('allocationType').value;
@@ -1453,17 +1483,16 @@
                       if (p > e.period) {
                         return `
                           <div class="slot-item ${isLab?'lab':''}" style="opacity:0.75; font-style:italic;" onclick="inspectSlot(${globalIdx})">
-                            <span class="slot-title" style="font-size:11px;">↳ ${esc(e.course)}</span>
+                            <span class="slot-title" style="font-size:11px;">↳ ${esc(courseDetails(e.course).code)}</span>
                             <div class="slot-meta"><span>(cont. in ${esc(e.room)})</span></div>
                           </div>
                         `;
                       }
                       return `
                         <div class="slot-item ${isLab?'lab':''}" onclick="inspectSlot(${globalIdx})">
-                          <span class="slot-title">${esc(e.course)}</span>
+                          <span class="slot-title">${esc(courseDetails(e.course).code)}${batchLabel(e.cohort) ? ` (${esc(batchLabel(e.cohort))})` : ''}</span>
                           <div class="slot-meta">
-                            <span>Room: <b>${esc(e.room)}</b></span>
-                            <span>Faculty: <b>${esc(getTeacherName(e.instructor))}</b></span>
+                            <span>${esc(e.room)} · ${esc(getTeacherName(e.instructor))}</span>
                             ${!isCohortView ? `<span>Group: <code>${esc(e.cohort)}</code></span>` : ''}
                           </div>
                           ${e.length > 1 ? `<span class="slot-badge lab-badge">${e.length}h Block (P${e.period}–P${e.period+e.length-1})</span>` : ''}
@@ -1493,24 +1522,28 @@
       });
       const gridHtml = buildWeeklyGrid(entries, true);
 
+      const group = data.class_groups.find(g => formatGroupId(g) === selectedCohort) || {};
+      const programme = group.program || 'Programme';
+      const academicYear = group.year || '';
+
       // Subject directory
       const uniqueCourses = [...new Map(entries.map(e => [e.course, e])).values()];
       const directoryHtml = `
-        <div style="margin-top: 24px;">
-          <h4 style="margin: 0 0 10px; font-size: 14px; font-weight: 700; text-transform: uppercase;">Course &amp; Faculty Directory</h4>
+        <div class="directory-print" style="margin-top: 18px;">
+          <h4 style="margin: 0 0 8px; font-size: 13px; font-weight: 700; text-transform: uppercase;">Subject &amp; Faculty Directory</h4>
           <table class="data-table">
             <thead>
               <tr>
-                <th style="width:50px">Sr No</th><th>Course Name</th><th>Allocated Faculty</th><th>Designated Room</th><th>Weekly Hours</th>
+                <th style="width:50px">Sr No</th><th>Subject Code</th><th>Subject Name</th><th>Faculty Name</th><th>Weekly Hours</th>
               </tr>
             </thead>
             <tbody>
               ${uniqueCourses.map((e, idx) => `
                 <tr>
                   <td class="num">${idx + 1}</td>
-                  <td><b>${esc(e.course)}</b></td>
+                  <td><b>${esc(courseDetails(e.course).code)}</b></td>
+                  <td>${esc(courseDetails(e.course).name)}</td>
                   <td>${esc(getTeacherName(e.instructor))}</td>
-                  <td>${esc(getRoomName(e.room))}</td>
                   <td class="num">${entries.filter(x => x.course === e.course).reduce((acc, x) => acc + x.length, 0)} hrs</td>
                 </tr>
               `).join('')}
@@ -1521,13 +1554,13 @@
 
       $('studentSheetContainer').innerHTML = `
         <div class="sheet-header">
-          <h4>CHRONOS UNIVERSITY — SCHOOL OF ENGINEERING &amp; TECHNOLOGY</h4>
-          <h2>ACADEMIC CLASS TIMETABLE — ${esc(selectedCohort)}</h2>
-          <div class="sheet-meta">Weekly Schedule · Mon to Fri (9:00 AM – 5:00 PM) · Lunch Break: ${esc(lunchDisplay())} · Official Version</div>
+          <h4>CHRONOS UNIVERSITY · SCHOOL OF ENGINEERING &amp; TECHNOLOGY</h4>
+          <h2>${esc(programme)} Time Table: ${esc(academicYear)} — ${esc(selectedCohort)}</h2>
+          <div class="sheet-meta">Department of Computer Science &amp; Engineering · Mon to Fri (9:00 AM – 5:00 PM) · Lunch: ${esc(lunchDisplay())}</div>
         </div>
         <div class="grid-table-wrap">${gridHtml}</div>
         ${directoryHtml}
-        <div style="display:flex; justify-content:space-between; margin-top:36px; padding-top:14px; border-top:1px solid #ccc; font-size:12px; color:#555;">
+        <div class="approval-row" style="display:flex; justify-content:space-between; margin-top:24px; padding-top:10px; border-top:1px solid #ccc; font-size:12px; color:#555;">
           <span>Prepared by: Timetable Committee</span>
           <span>Verified by: Department Head</span>
           <span>Approved by: Dean Academics</span>

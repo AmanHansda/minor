@@ -103,6 +103,13 @@ class SolverTests(unittest.TestCase):
         self.assertTrue(group_conflict(lecture, lab_one))
         self.assertFalse(group_conflict(lab_one, lab_two))
 
+    def test_lab_and_tutorial_batches_of_same_cohort_cannot_overlap(self):
+        lab = Entry("R2", "Lab One", "CSE-BTech-1stYear::LAB-1", "I2", "LAB1", "Mon", 1, 1)
+        tutorial = Entry("R3", "Tutorial One", "CSE-BTech-1stYear::TUTORIAL-1", "I3", "C1", "Mon", 1, 1)
+        from backend.app.solver.validator import group_conflict
+
+        self.assertTrue(group_conflict(lab, tutorial))
+
     def test_per_entity_exports(self):
         schedule = generate(self.requirements, self.rooms, self.instructors)
         class_csv = export_class_csv(schedule.entries, "CSE-S3-A")
