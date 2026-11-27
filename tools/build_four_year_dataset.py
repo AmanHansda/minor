@@ -1,5 +1,10 @@
 """Create a feasible whole-department timetable import workbook."""
+import sys
 from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from backend.app import xlsx_io
 
@@ -73,9 +78,15 @@ def build_dataset():
 if __name__ == "__main__":
     groups, rooms, faculty, allocations = build_dataset()
     xlsx_io.SAMPLES.update({"Groups": groups, "Rooms": rooms, "Faculty": faculty, "Allocations": allocations, "Configuration": [["13:00"]]})
-    target = Path("outputs/whole_department_timetable_dataset/chronosai_whole_department_dataset.xlsx")
+    target = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else ROOT / "outputs" / "whole_department_timetable_dataset" / "chronosai_whole_department_dataset.xlsx"
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_bytes(xlsx_io.build_template())
+    workbook_bytes = xlsx_io.build_template()
+    target.write_bytes(workbook_bytes)
+
+    four_year_target = ROOT / "outputs" / "four_year_timetable_dataset" / "chronosai_four_year_btech_dataset.xlsx"
+    if four_year_target.parent.exists():
+        four_year_target.write_bytes(workbook_bytes)
+
     data = xlsx_io.parse_upload(target.read_bytes())
     assert len(data["class_groups"]) == 12
     assert len(data["instructors"]) == 16

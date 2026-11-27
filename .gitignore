@@ -29,6 +29,12 @@ Desktop.ini
 htmlcov/
 .pytest_cache/
 
+# Logs
+*.log
+
+# Local sidecar files
+*.local.json
+
 # Agent & Temporary Taste-skill outputs
 .taste-skill/
 

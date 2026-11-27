@@ -197,6 +197,26 @@ class SolverTests(unittest.TestCase):
             elif e.day == "Wed":
                 self.assertIn("DTSTART:20260107T", ical)
 
+    def test_build_four_year_dataset_is_feasible(self):
+        from tools.build_four_year_dataset import build_dataset
+        from backend.app import xlsx_io, main
+        groups, rooms, faculty, allocations = build_dataset()
+        xlsx_io.SAMPLES.update({"Groups": groups, "Rooms": rooms, "Faculty": faculty, "Allocations": allocations, "Configuration": [["13:00"]]})
+        data = xlsx_io.parse_upload(xlsx_io.build_template())
+        reqs, rms, ppl = main.read_data(data)
+        sched = generate(reqs, rms, ppl, lunch_period=5)
+        self.assertEqual(sched.status, "FEASIBLE")
+
+    def test_build_full_week_dataset_is_feasible(self):
+        from tools.build_full_week_dataset import build_full_week_dataset
+        from backend.app import xlsx_io, main
+        groups, rooms, faculty, allocations, config = build_full_week_dataset()
+        xlsx_io.SAMPLES.update({"Groups": groups, "Rooms": rooms, "Faculty": faculty, "Allocations": allocations, "Configuration": config})
+        data = xlsx_io.parse_upload(xlsx_io.build_template())
+        reqs, rms, ppl = main.read_data(data)
+        sched = generate(reqs, rms, ppl, lunch_period=5)
+        self.assertEqual(sched.status, "FEASIBLE")
+        self.assertEqual(sum(e.length for e in sched.entries), 70)
 
 
 if __name__ == "__main__":

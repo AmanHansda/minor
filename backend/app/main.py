@@ -258,7 +258,7 @@ class Handler(SimpleHTTPRequestHandler):
             ident = path.rsplit("/", 1)[-1]
             result, diff = absent_reschedule(STATE["schedule"], ident, reqs, rooms, people, lunch_period=lunch_period())
             return self._send_json({"schedule": result, "diff": diff})
-        if self.path == "/" or self.path == "/index.html":
+        if parsed_url.path in ("/", "/index.html"):
             self.path = "/frontend/index.html"
         return super().do_GET()
 
